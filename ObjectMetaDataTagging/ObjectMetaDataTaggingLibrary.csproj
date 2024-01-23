@@ -12,6 +12,7 @@
     <Title>Object Metadata Tagging Libary</Title>
     <Product>Object MetaData Tagging Library</Product>
     <Copyright>2024</Copyright>
+    <RepositoryUrl>https://github.com/richardsmythe/ObjectMetaDataTaggingLibrary</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
