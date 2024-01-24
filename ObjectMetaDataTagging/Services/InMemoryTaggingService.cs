@@ -30,30 +30,14 @@ namespace ObjectMetaDataTagging.Services
         public readonly ConcurrentDictionary<object, Dictionary<Guid, BaseTag>> data = new ConcurrentDictionary<object, Dictionary<Guid, BaseTag>>();
         public readonly TaggingEventManager<AsyncTagAddedEventArgs, AsyncTagRemovedEventArgs, AsyncTagUpdatedEventArgs> _eventManager;
         private SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
+
+        public event EventHandler<AsyncTagAddedEventArgs> TagAdded;
+        public event EventHandler<AsyncTagRemovedEventArgs> TagRemoved;
+        public event EventHandler<AsyncTagUpdatedEventArgs> TagUpdated;
+
         public Action<object, T>? OnSetTagAsyncCallback { get; set; }
 
-        /// <summary>
-        /// By exposing these events, it allow consumers to attach event handlers
-        /// to perform additional actions when tags are added, removed, or updated.
-        /// This can be useful if someone wants to extend the behavior of the library.
-        /// </summary>
-        public event EventHandler<AsyncTagAddedEventArgs> TagAdded
-        {
-            add => _eventManager.TagAdded += value;
-            remove => _eventManager.TagAdded -= value;
-        }
-
-        public event EventHandler<AsyncTagRemovedEventArgs> TagRemoved
-        {
-            add => _eventManager.TagRemoved += value;
-            remove => _eventManager.TagRemoved -= value;
-        }
-
-        public event EventHandler<AsyncTagUpdatedEventArgs> TagUpdated
-        {
-            add => _eventManager.TagUpdated += value;
-            remove => _eventManager.TagUpdated -= value;
-        }
+     
 
         /// <summary>
         /// Retrieve an object graph for the current objects and their tags.

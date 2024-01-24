@@ -1,4 +1,5 @@
-﻿using ObjectMetaDataTagging.Models.TagModels;
+﻿using ObjectMetaDataTagging.Events;
+using ObjectMetaDataTagging.Models.TagModels;
 using ObjectMetaDataTagging.Utilities;
 
 namespace ObjectMetaDataTagging.Interfaces
@@ -17,6 +18,10 @@ namespace ObjectMetaDataTagging.Interfaces
 
         Task<List<GraphNode>> GetObjectGraph();
         Task BulkAddTagsAsync(object o, IEnumerable<T> tags);
+
+        event EventHandler<AsyncTagAddedEventArgs> TagAdded;
+        event EventHandler<AsyncTagRemovedEventArgs> TagRemoved;
+        event EventHandler<AsyncTagUpdatedEventArgs> TagUpdated;
 
     }
 }

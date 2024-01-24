@@ -6,10 +6,6 @@ using ObjectMetaDataTagging.Services;
 
 namespace ObjectMetaDataTagging.Configuration
 {
-    /* 
-       Default services for the external application to register with,
-       e.g., builder.Services.AddObjectMetaDataTagging();
-    */
     public static class ServiceCollection
     {
         public static IServiceCollection AddObjectMetaDataTagging(this IServiceCollection services)
@@ -24,6 +20,9 @@ namespace ObjectMetaDataTagging.Configuration
 
             // Register the EventManager
             services.AddSingleton<TaggingEventManager<AsyncTagAddedEventArgs, AsyncTagRemovedEventArgs, AsyncTagUpdatedEventArgs>>();
+
+            // Register ObjectMetaDataTaggingFacade<T> for BaseTag
+            services.AddScoped(typeof(ObjectMetaDataTaggingFacade<>));
 
             return services;
         }
