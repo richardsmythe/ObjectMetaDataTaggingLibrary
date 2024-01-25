@@ -200,6 +200,7 @@ namespace ObjectMetaDataTagging.Services
             {
                 semaphore.Release();
             }
+                await _eventManager.RaiseTagAdded(new AsyncTagAddedEventArgs(o, tag));
 
             // Call the callback if set by something (like a test).
             OnSetTagAsyncCallback?.Invoke(o, tag);
