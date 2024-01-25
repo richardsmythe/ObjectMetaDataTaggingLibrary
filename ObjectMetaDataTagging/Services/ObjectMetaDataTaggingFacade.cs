@@ -5,7 +5,7 @@ using ObjectMetaDataTagging.Utilities;
 
 namespace ObjectMetaDataTagging
 {
-    public class ObjectMetaDataTaggingFacade<T> where T : BaseTag
+    public class ObjectMetaDataTaggingFacade<T> : IObjectMetaDataTaggingFacade<T> where T : BaseTag
     {
         private readonly IDefaultTaggingService<T> _taggingService;
 
