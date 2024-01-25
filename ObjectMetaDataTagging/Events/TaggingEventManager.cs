@@ -45,22 +45,28 @@ namespace ObjectMetaDataTagging.Events
         {
             try
             {
-                var result = await _addedHandler.HandleAsync(e);
-
-                if (result != null)
+                if (_addedHandler != null)
                 {
-                    if (TagAdded != null)
+                    var result = await _addedHandler.HandleAsync(e);
+
+
+                    if (result != null)
                     {
-                        foreach (var handler in TagAdded.GetInvocationList())
+                        if (TagAdded != null)
                         {
-                            if (handler is IAsyncEventHandler<AsyncTagAddedEventArgs> asyncHandler)
+                            foreach (var handler in TagAdded.GetInvocationList())
                             {
-                                await asyncHandler.HandleAsync(e);
+                                if (handler is IAsyncEventHandler<AsyncTagAddedEventArgs> asyncHandler)
+                                {
+                                    await asyncHandler.HandleAsync(e);
+                                }
                             }
                         }
                     }
                     return result;
                 }
+
+
                 else
                 {
                     // where _addedHandler.HandleAsync returns null it can return a default value.
@@ -69,7 +75,7 @@ namespace ObjectMetaDataTagging.Events
                 }
             }
             catch (Exception ex)
-            {                
+            {
                 throw new TagAdditionException("Error occured while raising TagAdded event", ex);
             }
         }
@@ -115,7 +121,7 @@ namespace ObjectMetaDataTagging.Events
                 }
             }
             catch (Exception ex)
-            {          
+            {
                 throw new TagUpdateException("Error handling tag update event.", ex);
             }
         }
