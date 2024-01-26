@@ -27,5 +27,7 @@ namespace ObjectMetaDataTagging.Interfaces
 
         BaseTag CreateBaseTag(string name, object value, string description);
         IEnumerable<BaseTag> CreateBaseTags(IEnumerable<(string name, object value, string description)> tagList);
+        Task<T> MapTagsBetweenTypes(object sourceObject);
     }
 }
+

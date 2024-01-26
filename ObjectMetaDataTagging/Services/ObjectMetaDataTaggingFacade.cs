@@ -12,13 +12,16 @@ namespace ObjectMetaDataTagging
 
         private readonly IDefaultTaggingService<T> _taggingService;
         private readonly ITagFactory _tagFactory;
+        private readonly ITagMapper<T> _tagMapper;
 
         public ObjectMetaDataTaggingFacade(
             IDefaultTaggingService<T> taggingService, 
-            ITagFactory tagFactory)
+            ITagFactory tagFactory,
+            ITagMapper<T> tagMapper)
         {
             _taggingService = taggingService ?? throw new ArgumentNullException(nameof(taggingService));
             _tagFactory = tagFactory ?? throw new ArgumentNullException(nameof(tagFactory));
+            _tagMapper = tagMapper ?? throw new ArgumentNullException(nameof(tagMapper));
         }
 
 
@@ -62,6 +65,8 @@ namespace ObjectMetaDataTagging
 
         public BaseTag CreateBaseTag(string name, object value, string description) => _tagFactory.CreateBaseTag(name, value, description);
         public IEnumerable<BaseTag> CreateBaseTags(IEnumerable<(string name, object value, string description)> tagList) => _tagFactory.CreateBaseTags(tagList);
-        
+
+        public Task<T> MapTagsBetweenTypes(object sourceObject) => _tagMapper.MapTagsBetweenTypes(sourceObject);
     }
 }
+
