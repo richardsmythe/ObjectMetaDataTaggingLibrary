@@ -25,6 +25,7 @@ namespace ObjectMetaDataTagging.Interfaces
         Task<List<GraphNode>> GetObjectGraph();
         Task BulkAddTagsAsync(object o, IEnumerable<T> tags);
 
-
+        BaseTag CreateBaseTag(string name, object value, string description);
+        IEnumerable<BaseTag> CreateBaseTags(IEnumerable<(string name, object value, string description)> tagList);
     }
 }

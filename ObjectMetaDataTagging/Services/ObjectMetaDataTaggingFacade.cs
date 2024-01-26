@@ -11,11 +11,16 @@ namespace ObjectMetaDataTagging
     {
 
         private readonly IDefaultTaggingService<T> _taggingService;
+        private readonly ITagFactory _tagFactory;
 
-        public ObjectMetaDataTaggingFacade(IDefaultTaggingService<T> taggingService)
+        public ObjectMetaDataTaggingFacade(
+            IDefaultTaggingService<T> taggingService, 
+            ITagFactory tagFactory)
         {
             _taggingService = taggingService ?? throw new ArgumentNullException(nameof(taggingService));
+            _tagFactory = tagFactory ?? throw new ArgumentNullException(nameof(tagFactory));
         }
+
 
         public event EventHandler<AsyncTagAddedEventArgs<T>> TagAdded
         {
@@ -54,6 +59,9 @@ namespace ObjectMetaDataTagging
         public async Task<List<GraphNode>> GetObjectGraph() => await _taggingService.GetObjectGraph();
 
         public virtual async Task BulkAddTagsAsync(object o, IEnumerable<T> tags) => await _taggingService.BulkAddTagsAsync(o, tags);
-               
+
+        public BaseTag CreateBaseTag(string name, object value, string description) => _tagFactory.CreateBaseTag(name, value, description);
+        public IEnumerable<BaseTag> CreateBaseTags(IEnumerable<(string name, object value, string description)> tagList) => _tagFactory.CreateBaseTags(tagList);
+        
     }
 }
