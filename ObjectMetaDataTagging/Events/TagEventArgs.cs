@@ -5,19 +5,19 @@ using ObjectMetaDataTagging.Models.TagModels;
 
 namespace ObjectMetaDataTagging.Events
 {
-    public class AsyncTagAddedEventArgs : EventArgs
+    public class AsyncTagAddedEventArgs<T> : EventArgs
     {
         public object TaggedObject { get; }
-        public BaseTag Tag { get; }
+        public T Tag { get; }
 
-        public AsyncTagAddedEventArgs(object taggedObject, BaseTag tag)
+        public AsyncTagAddedEventArgs(object taggedObject, T tag)
         {
             TaggedObject = taggedObject ?? throw new ObjectNotFoundException(nameof(taggedObject));
             Tag = tag ?? throw new ObjectNotFoundException(nameof(tag));
         }
     }
 
-    public class AsyncTagRemovedEventArgs : EventArgs
+    public class AsyncTagRemovedEventArgs<T> : EventArgs
     {
         public object TaggedObject { get; }
         public object Tag { get; }
@@ -29,7 +29,7 @@ namespace ObjectMetaDataTagging.Events
         }
     }
 
-    public class AsyncTagUpdatedEventArgs : EventArgs
+    public class AsyncTagUpdatedEventArgs<T> : EventArgs
     {
         public object TaggedObject { get; }
         public BaseTag OldTag { get; }

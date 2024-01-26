@@ -20,7 +20,7 @@ namespace ObjectMetaDataTagging.Configuration
             services.AddSingleton<ITagFactory, TagFactory>();
 
             // Register the EventManager
-            services.AddSingleton<TaggingEventManager<AsyncTagAddedEventArgs, AsyncTagRemovedEventArgs, AsyncTagUpdatedEventArgs>>();
+            //services.AddSingleton<TaggingEventManager<AsyncTagAddedEventArgs, AsyncTagRemovedEventArgs, AsyncTagUpdatedEventArgs>>();
 
             // Register ObjectMetaDataTaggingFacade<BaseTag> and its interface IObjectMetaDataTaggingFacade<BaseTag>
             services.AddScoped<IObjectMetaDataTaggingFacade<BaseTag>, ObjectMetaDataTaggingFacade<BaseTag>>();

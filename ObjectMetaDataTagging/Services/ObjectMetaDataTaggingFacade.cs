@@ -1,17 +1,38 @@
-﻿using ObjectMetaDataTagging.Events;
+﻿
+using ObjectMetaDataTagging.Events;
 using ObjectMetaDataTagging.Interfaces;
 using ObjectMetaDataTagging.Models.TagModels;
+using ObjectMetaDataTagging.Services;
 using ObjectMetaDataTagging.Utilities;
 
 namespace ObjectMetaDataTagging
 {
     public class ObjectMetaDataTaggingFacade<T> : IObjectMetaDataTaggingFacade<T> where T : BaseTag
     {
+
         private readonly IDefaultTaggingService<T> _taggingService;
 
         public ObjectMetaDataTaggingFacade(IDefaultTaggingService<T> taggingService)
         {
             _taggingService = taggingService ?? throw new ArgumentNullException(nameof(taggingService));
+        }
+
+        public event EventHandler<AsyncTagAddedEventArgs<T>> TagAdded
+        {
+            add => _taggingService.TagAdded += value;
+            remove => _taggingService.TagAdded -= value;
+        }
+
+        public event EventHandler<AsyncTagRemovedEventArgs<T>> TagRemoved
+        {
+            add => _taggingService.TagRemoved += value;
+            remove => _taggingService.TagRemoved -= value;
+        }
+
+        public event EventHandler<AsyncTagUpdatedEventArgs<T>> TagUpdated
+        {
+            add => _taggingService.TagUpdated += value;
+            remove => _taggingService.TagUpdated -= value;
         }
 
         public virtual async Task SetTagAsync(object o, T tag) => await _taggingService.SetTagAsync(o, tag);
@@ -33,47 +54,6 @@ namespace ObjectMetaDataTagging
         public async Task<List<GraphNode>> GetObjectGraph() => await _taggingService.GetObjectGraph();
 
         public virtual async Task BulkAddTagsAsync(object o, IEnumerable<T> tags) => await _taggingService.BulkAddTagsAsync(o, tags);
-
-        public event EventHandler<AsyncTagAddedEventArgs> TagAdded
-        {
-            add
-            {
-                if (_taggingService != null)
-                    _taggingService.TagAdded += value;
-            }
-            remove
-            {
-                if (_taggingService != null)
-                    _taggingService.TagAdded -= value;
-            }
-        }
-
-        public event EventHandler<AsyncTagRemovedEventArgs> TagRemoved
-        {
-            add
-            {
-                if (_taggingService != null)
-                    _taggingService.TagRemoved += value;
-            }
-            remove
-            {
-                if (_taggingService != null)
-                    _taggingService.TagRemoved -= value;
-            }
-        }
-
-        public event EventHandler<AsyncTagUpdatedEventArgs> TagUpdated
-        {
-            add
-            {
-                if (_taggingService != null)
-                    _taggingService.TagUpdated += value;
-            }
-            remove
-            {
-                if (_taggingService != null)
-                    _taggingService.TagUpdated -= value;
-            }
-        }
+               
     }
 }

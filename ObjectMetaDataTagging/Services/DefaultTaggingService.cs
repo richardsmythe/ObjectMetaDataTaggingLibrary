@@ -2,9 +2,7 @@
 using ObjectMetaDataTagging.Interfaces;
 using ObjectMetaDataTagging.Models.TagModels;
 using ObjectMetaDataTagging.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+
 
 namespace ObjectMetaDataTagging.Services
 {
@@ -18,10 +16,9 @@ namespace ObjectMetaDataTagging.Services
     public class DefaultTaggingService<T> : IDefaultTaggingService<T> where T : BaseTag
     {
         private readonly IDefaultTaggingService<T> _taggingService;
-
-        public event EventHandler<AsyncTagAddedEventArgs> TagAdded;
-        public event EventHandler<AsyncTagRemovedEventArgs> TagRemoved;
-        public event EventHandler<AsyncTagUpdatedEventArgs> TagUpdated;
+        public event EventHandler<AsyncTagAddedEventArgs<T>> TagAdded;
+        public event EventHandler<AsyncTagRemovedEventArgs<T>> TagRemoved;
+        public event EventHandler<AsyncTagUpdatedEventArgs<T>> TagUpdated;
 
         public DefaultTaggingService(IDefaultTaggingService<T> taggingService)
         {

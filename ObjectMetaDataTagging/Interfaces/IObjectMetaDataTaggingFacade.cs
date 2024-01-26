@@ -3,12 +3,17 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using ObjectMetaDataTagging.Events;
 using ObjectMetaDataTagging.Models.TagModels;
+using ObjectMetaDataTagging.Services;
 using ObjectMetaDataTagging.Utilities;
 
 namespace ObjectMetaDataTagging.Interfaces
 {
     public interface IObjectMetaDataTaggingFacade<T> where T : BaseTag
     {
+        event EventHandler<AsyncTagAddedEventArgs<T>> TagAdded;
+        event EventHandler<AsyncTagRemovedEventArgs<T>> TagRemoved;
+        event EventHandler<AsyncTagUpdatedEventArgs<T>> TagUpdated;
+
         Task SetTagAsync(object o, T tag);
         Task<bool> UpdateTagAsync(object o, Guid tagId, T newTag);
         Task<IEnumerable<T>> GetAllTags(object o);
@@ -20,8 +25,6 @@ namespace ObjectMetaDataTagging.Interfaces
         Task<List<GraphNode>> GetObjectGraph();
         Task BulkAddTagsAsync(object o, IEnumerable<T> tags);
 
-        event EventHandler<AsyncTagAddedEventArgs> TagAdded;
-        event EventHandler<AsyncTagRemovedEventArgs> TagRemoved;
-        event EventHandler<AsyncTagUpdatedEventArgs> TagUpdated;
+
     }
 }

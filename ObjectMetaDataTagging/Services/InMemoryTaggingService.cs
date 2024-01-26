@@ -1,4 +1,5 @@
-﻿using ObjectMetaDataTagging.Events;
+﻿
+using ObjectMetaDataTagging.Events;
 using ObjectMetaDataTagging.Exceptions;
 using ObjectMetaDataTagging.Interfaces;
 using ObjectMetaDataTagging.Models.TagModels;
@@ -11,33 +12,17 @@ namespace ObjectMetaDataTagging.Services
     public class InMemoryTaggingService<T> : IDefaultTaggingService<T>
         where T : BaseTag
     {
-        /// <summary>
-        /// Constructs a DefaultTaggingService with the specified TaggingEventManager for event handling.
-        /// </summary>
-        /// <param name="eventManager">The TaggingEventManager used for handling tagging-related events.</param>
-        public InMemoryTaggingService(
-            TaggingEventManager<AsyncTagAddedEventArgs, AsyncTagRemovedEventArgs, AsyncTagUpdatedEventArgs> eventManager)
-        {
-            _eventManager = eventManager;
-        }
-
-        public InMemoryTaggingService()
-        {
-            _eventManager = null;
-        }
-
-        // Hashtable vs dictionary?
-        public readonly ConcurrentDictionary<object, Dictionary<Guid, BaseTag>> data = new ConcurrentDictionary<object, Dictionary<Guid, BaseTag>>();
-        public readonly TaggingEventManager<AsyncTagAddedEventArgs, AsyncTagRemovedEventArgs, AsyncTagUpdatedEventArgs> _eventManager;
         private SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
+        
+        public event EventHandler<AsyncTagAddedEventArgs<T>> TagAdded;
+        public event EventHandler<AsyncTagRemovedEventArgs<T>> TagRemoved;
+        public event EventHandler<AsyncTagUpdatedEventArgs<T>> TagUpdated;
+        public readonly ConcurrentDictionary<object, Dictionary<Guid, BaseTag>> data = new ConcurrentDictionary<object, Dictionary<Guid, BaseTag>>();
 
-        public event EventHandler<AsyncTagAddedEventArgs> TagAdded;
-        public event EventHandler<AsyncTagRemovedEventArgs> TagRemoved;
-        public event EventHandler<AsyncTagUpdatedEventArgs> TagUpdated;
-
+        protected virtual void OnTagAdded(AsyncTagAddedEventArgs<T> e) => TagAdded?.Invoke(this, e);
+        protected virtual void OnTagRemoved(AsyncTagRemovedEventArgs<T> e) => TagRemoved?.Invoke(this, e);
+        protected virtual void OnTagUpdated(AsyncTagUpdatedEventArgs<T> e) => TagUpdated?.Invoke(this, e);
         public Action<object, T>? OnSetTagAsyncCallback { get; set; }
-
-     
 
         /// <summary>
         /// Retrieve an object graph for the current objects and their tags.
@@ -161,7 +146,7 @@ namespace ObjectMetaDataTagging.Services
                         return true;
                     }
 
-                    await _eventManager.RaiseTagRemoved(new AsyncTagRemovedEventArgs(o, tagId));
+                    OnTagRemoved(new AsyncTagRemovedEventArgs<T>(o, tagId));
                 }
                 else
                 {
@@ -200,11 +185,10 @@ namespace ObjectMetaDataTagging.Services
             {
                 semaphore.Release();
             }
-                await _eventManager.RaiseTagAdded(new AsyncTagAddedEventArgs(o, tag));
 
-            // Call the callback if set by something (like a test).
             OnSetTagAsyncCallback?.Invoke(o, tag);
-
+            
+            OnTagAdded(new AsyncTagAddedEventArgs<T>(o, tag));
         }
 
         /// <summary>
@@ -241,8 +225,8 @@ namespace ObjectMetaDataTagging.Services
                         return true;
                     }
                 }
+           
 
-                await _eventManager.RaiseTagUpdated(new AsyncTagUpdatedEventArgs(o, null, modifiedTag));
                 return false;
             }
             finally
@@ -342,9 +326,6 @@ namespace ObjectMetaDataTagging.Services
             // so that it won't block the calling thread while adding tags,
             await Task.WhenAll(tags.Select(tag => bulkAddDelegate(o, tag)));
         }
-
         #endregion
-
-
-    }
+    }  
 }
