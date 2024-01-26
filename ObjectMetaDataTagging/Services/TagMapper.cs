@@ -12,7 +12,7 @@ namespace ObjectMetaDataTagging.Services
         /// <exception cref="ArgumentNullException">
         /// Thrown when the <paramref name="sourceObject"/> is null.
         /// </exception>
-        public async Task<T> MapTagsBetweenTypes(object sourceObject)
+        public async Task<T> MapTagsFromOtherType(object sourceObject)
         {
             if (sourceObject == null)
             {

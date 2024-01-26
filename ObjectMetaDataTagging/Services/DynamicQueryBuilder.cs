@@ -7,66 +7,71 @@ namespace ObjectMetaDataTagging.Services
     /// <summary>
     /// Provides a dynamic query builder for filtering items based on custom filter criteria.
     /// </summary>
-    /// <typeparam name="TProperty1">Type of the first property used in filtering.</typeparam>
-    /// <typeparam name="TProperty2">Type of the second property used in filtering.</typeparam>
     /// <typeparam name="TItem">Type of the items being filtered.</typeparam>
-    public class DynamicQueryBuilder<TProperty1, TProperty2, TItem> : 
-        IDynamicQueryBuilder<TProperty1, TProperty2, TItem>
+    public class DynamicQueryBuilder<TItem> : IDynamicQueryBuilder<TItem>
     {
+        /// <summary>
+        /// Gets or sets the list of property filters.
+        /// </summary>
+        private List<Func<TItem, bool>> Filters { get; } = new List<Func<TItem, bool>>();
+
+        /// <summary>
+        /// Gets or sets the logical operator used to combine filter expressions.
+        /// </summary>
+        private LogicalOperator LogicalOperator { get; set; } = LogicalOperator.OR;
+
+        /// <summary>
+        /// Adds a property filter to the list of filters.
+        /// </summary>
+        /// <param name="propertyFilter">Delegate-based filter for a property.</param>
+        /// <returns>The current instance of the <see cref="DynamicQueryBuilder{TItem}"/>.</returns>
+        public IDynamicQueryBuilder<TItem> WithPropertyFilter(Func<TItem, bool> propertyFilter)
+        {
+            Filters.Add(propertyFilter);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the logical operator used to combine filter expressions.
+        /// </summary>
+        /// <param name="logicalOperator">Logical operator to be set.</param>
+        /// <returns>The current instance of the <see cref="DynamicQueryBuilder{TItem}"/>.</returns>
+        public IDynamicQueryBuilder<TItem> SetLogicalOperator(LogicalOperator logicalOperator)
+        {
+            LogicalOperator = logicalOperator;
+            return this;
+        }
+
         /// <summary>
         /// Builds a dynamic query to filter items based on custom filter criteria.
         /// </summary>
         /// <param name="source">A list of items to be filtered.</param>
-        /// <param name="property1Filter">Delegate-based filter for the first property.</param>
-        /// <param name="property2Filter">Delegate-based filter for the second property.</param>
-        /// <param name="logicalOperator">Logical operator used to combine filter expressions.</param>
         /// <returns>An IQueryable representing the filtered results.</returns>
-        public IQueryable<TItem> BuildDynamicQuery(
-            List<TItem> source,
-            Func<TItem, bool>? property1Filter = null,
-            Func<TItem, bool>? property2Filter = null,
-            LogicalOperator logicalOperator = LogicalOperator.OR)
+        public IQueryable<TItem> BuildDynamicQuery(List<TItem> source)
         {
-            if (property1Filter == null && property2Filter == null)
+            if (Filters.Count == 0)
             {
-                Console.WriteLine("No filter conditions found.");
+                Console.WriteLine("No filter conditions found");
                 return source.AsQueryable();
             }
 
             var parameter = Expression.Parameter(typeof(TItem), "item");
-            Console.WriteLine($"Parameter name: {parameter.Name}");
-            Expression? predicateBody = null;
 
-            if (property1Filter != null)
-            {
-                predicateBody = predicateBody == null
-                    ? Expression.Invoke(Expression.Constant(property1Filter), parameter)
-                    : logicalOperator == LogicalOperator.AND
-                        ? Expression.AndAlso(predicateBody, Expression.Invoke(Expression.Constant(property1Filter), parameter))
-                        : Expression.OrElse(predicateBody, Expression.Invoke(Expression.Constant(property1Filter), parameter));
-                Console.WriteLine("property1Filter: " + property1Filter.ToString());
-            }
+            // Create a seed expression based on the logical operator
+            Expression seedExpression = LogicalOperator == LogicalOperator.AND
+                ? Expression.Constant(true)  // true for AND
+                : Expression.Constant(false); // false for OR
 
-            if (property2Filter != null)
-            {
-                predicateBody = predicateBody == null
-                    ? Expression.Invoke(Expression.Constant(property2Filter), parameter)
-                    : logicalOperator == LogicalOperator.AND
-                        ? Expression.AndAlso(predicateBody, Expression.Invoke(Expression.Constant(property2Filter), parameter))
-                        : Expression.OrElse(predicateBody, Expression.Invoke(Expression.Constant(property2Filter), parameter));
-                Console.WriteLine("property2Filter: " + property2Filter.ToString());
-            }
-
-            Console.WriteLine($"predicatebody: {predicateBody}");
-
-            if (predicateBody == null)
-            {
-                Console.WriteLine("No valid filter predicates, returning all items.");
-                return source.AsQueryable();
-            }
+            // Combine the filters using the appropriate binary operator
+            Expression predicateBody = Filters
+                .Select(filter => Expression.Invoke(Expression.Constant(filter), parameter))
+                .Aggregate(seedExpression,
+                           (current, next) => LogicalOperator == LogicalOperator.AND
+                               ? Expression.AndAlso(current, next)
+                               : Expression.OrElse(current, next));
 
             var lambda = Expression.Lambda<Func<TItem, bool>>(predicateBody, parameter);
-            Console.WriteLine("Filter expression: " + lambda.ToString());
+            Console.WriteLine("Filter expression: " + lambda);
 
             var result = source.AsQueryable().Where(lambda);
             Console.WriteLine("Filtered items count: " + result.Count());

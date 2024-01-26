@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ObjectMetaDataTagging.Events;
+using ObjectMetaDataTagging.Models.QueryModels;
 using ObjectMetaDataTagging.Models.TagModels;
 using ObjectMetaDataTagging.Services;
 using ObjectMetaDataTagging.Utilities;
@@ -24,10 +25,11 @@ namespace ObjectMetaDataTagging.Interfaces
         object? GetObjectByTag(Guid tagId);
         Task<List<GraphNode>> GetObjectGraph();
         Task BulkAddTagsAsync(object o, IEnumerable<T> tags);
-
         BaseTag CreateBaseTag(string name, object value, string description);
         IEnumerable<BaseTag> CreateBaseTags(IEnumerable<(string name, object value, string description)> tagList);
         Task<T> MapTagsBetweenTypes(object sourceObject);
+        Task<IEnumerable<T>> GetTagsByQueryAsync(List<T> source, Func<T, bool> propertyFilter, LogicalOperator logicalOperator = LogicalOperator.OR);
+
     }
 }
 

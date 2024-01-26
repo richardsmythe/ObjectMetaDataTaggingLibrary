@@ -1,6 +1,7 @@
 ﻿
 using ObjectMetaDataTagging.Events;
 using ObjectMetaDataTagging.Interfaces;
+using ObjectMetaDataTagging.Models.QueryModels;
 using ObjectMetaDataTagging.Models.TagModels;
 using ObjectMetaDataTagging.Services;
 using ObjectMetaDataTagging.Utilities;
@@ -13,15 +14,21 @@ namespace ObjectMetaDataTagging
         private readonly IDefaultTaggingService<T> _taggingService;
         private readonly ITagFactory _tagFactory;
         private readonly ITagMapper<T> _tagMapper;
+        private readonly IDynamicQueryBuilder<T> _tagQueryBuilder;
+        
 
         public ObjectMetaDataTaggingFacade(
             IDefaultTaggingService<T> taggingService, 
             ITagFactory tagFactory,
-            ITagMapper<T> tagMapper)
+            ITagMapper<T> tagMapper,
+            IDynamicQueryBuilder<T> tagQueryBuilder
+
+           )
         {
             _taggingService = taggingService ?? throw new ArgumentNullException(nameof(taggingService));
             _tagFactory = tagFactory ?? throw new ArgumentNullException(nameof(tagFactory));
             _tagMapper = tagMapper ?? throw new ArgumentNullException(nameof(tagMapper));
+            _tagQueryBuilder = tagQueryBuilder ?? throw new ArgumentNullException(nameof(tagQueryBuilder));            
         }
 
 
@@ -66,7 +73,19 @@ namespace ObjectMetaDataTagging
         public BaseTag CreateBaseTag(string name, object value, string description) => _tagFactory.CreateBaseTag(name, value, description);
         public IEnumerable<BaseTag> CreateBaseTags(IEnumerable<(string name, object value, string description)> tagList) => _tagFactory.CreateBaseTags(tagList);
 
-        public Task<T> MapTagsBetweenTypes(object sourceObject) => _tagMapper.MapTagsBetweenTypes(sourceObject);
+        public Task<T> MapTagsBetweenTypes(object sourceObject) => _tagMapper.MapTagsFromOtherType(sourceObject);
+        public async Task<IEnumerable<T>> GetTagsByQueryAsync(List<T> source, Func<T, bool> propertyFilter, LogicalOperator logicalOperator = LogicalOperator.OR)
+        {
+            IEnumerable<T> result = await Task.Run(() =>
+                _tagQueryBuilder
+                    .WithPropertyFilter(propertyFilter)
+                    .SetLogicalOperator(logicalOperator)
+                    .BuildDynamicQuery(source)
+                    .ToList());
+
+            return result;
+        }
+
     }
 }
 

@@ -5,12 +5,10 @@ using System.Linq;
 
 namespace ObjectMetaDataTagging.Interfaces
 {
-    public interface IDynamicQueryBuilder<TProperty1, TProperty2, TItem>
+    public interface IDynamicQueryBuilder<TItem>
     {
-        IQueryable<TItem> BuildDynamicQuery(
-            List<TItem> sourceObject,
-            Func<TItem, bool>? property1Filter = null,
-            Func<TItem, bool>? property2Filter = null,
-            LogicalOperator logicalOperator = LogicalOperator.OR);
+        IDynamicQueryBuilder<TItem> WithPropertyFilter(Func<TItem, bool> propertyFilter);
+        IDynamicQueryBuilder<TItem> SetLogicalOperator(LogicalOperator logicalOperator);
+        IQueryable<TItem> BuildDynamicQuery(List<TItem> source);
     }
 }
