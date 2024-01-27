@@ -10,7 +10,7 @@ namespace ObjectMetaDataTagging.Test
         public async Task TagMapper_ShouldMapTagsFromOneTypeToAnother()
         {
             // Arrange
-            var taggingService = new InMemoryTaggingService<BaseTag>(new TaggingEventManager<AsyncTagAddedEventArgs, AsyncTagRemovedEventArgs, AsyncTagUpdatedEventArgs>());
+            var taggingService = new InMemoryTaggingService<BaseTag>();
             var obj1 = new PersonTranscation { Amount = 1500, Sender = "Richard", Receiver = "Bob" };
             var tag = new BaseTag("TestTag", "Warning", "A string tag");
             var tagMapper = new TagMapper<TestTagType>();
@@ -18,7 +18,7 @@ namespace ObjectMetaDataTagging.Test
             await taggingService.SetTagAsync(obj1, tag);
 
             // Act
-            var mappedObject = await tagMapper.MapTagsBetweenTypes(tag);
+            var mappedObject = await tagMapper.MapTagsFromOtherType(tag);
 
             // Assert
             Assert.NotNull(mappedObject);

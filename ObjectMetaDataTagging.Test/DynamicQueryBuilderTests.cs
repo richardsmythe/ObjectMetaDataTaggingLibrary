@@ -11,7 +11,7 @@ namespace ObjectMetaDataTagging.Test
         public void BuildDynamicQuery_ShouldFilterTagsCorrectlyUsingLogicalOperatorAnd()
         {
             // Arrange
-            var dynamicQueryBuilder = new DynamicQueryBuilder<List<BaseTag>, string, BaseTag>();
+            var dynamicQueryBuilder = new DynamicQueryBuilder<BaseTag>();
 
             var tags = GenerateTags();
             var filterName = "Tag1";
@@ -19,12 +19,12 @@ namespace ObjectMetaDataTagging.Test
             var customFilter = new CustomFilter(filterName, filterType);
 
             // Act
-            var filteredResults = dynamicQueryBuilder.BuildDynamicQuery(
-                tags,
-                tag => tag.Name == customFilter.Name,
-                tag => tag.Type == customFilter.Type,
-                LogicalOperator.AND
-            );
+            var filteredResults = dynamicQueryBuilder
+                .WithPropertyFilter(t => t.Name == customFilter.Name)
+                .WithPropertyFilter(t => t.Type == customFilter.Type)
+                .SetLogicalOperator(LogicalOperator.AND)
+                .BuildDynamicQuery(tags);             
+            
 
             // Assert
             Assert.All(filteredResults,
