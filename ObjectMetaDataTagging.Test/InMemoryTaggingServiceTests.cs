@@ -63,7 +63,7 @@ namespace ObjectMetaDataTagging.Test
         }
 
         [Fact]
-        public async void RemoveTagAsync_ShouldRemoveGivenTagFromDictionary_AndRaiseTagRemovedEvent()
+        public async void RemoveTagAsync_ShouldRemoveGivenTagFromDictionary()
         {
             // Arrange
 
@@ -84,7 +84,7 @@ namespace ObjectMetaDataTagging.Test
         }
 
         [Fact]
-        public async void UpdateTagAsync_ShouldUpdateGivenTagInDictionary_AndRaiseTagRemovedEvent()
+        public async void UpdateTagAsync_ShouldUpdateGivenTagInDictionary()
         {
             // Arrange
             var taggingService = new InMemoryTaggingService<BaseTag>();
