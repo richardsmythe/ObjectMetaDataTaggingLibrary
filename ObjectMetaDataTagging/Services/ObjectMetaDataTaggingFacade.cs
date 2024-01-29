@@ -74,7 +74,7 @@ namespace ObjectMetaDataTagging
         public IEnumerable<BaseTag> CreateBaseTags(IEnumerable<(string name, object value, string description)> tagList) => _tagFactory.CreateBaseTags(tagList);
 
         public Task<T> MapTagsBetweenTypes(object sourceObject) => _tagMapper.MapTagsFromOtherType(sourceObject);
-        public async Task<IEnumerable<T>> GetTagsByQueryAsync(List<T> source, Func<T, bool> propertyFilter, LogicalOperator logicalOperator = LogicalOperator.OR)
+        public async Task<IEnumerable<T>> BuildQuery(List<T> source, Func<T, bool> propertyFilter, LogicalOperator logicalOperator = LogicalOperator.OR)
         {
             IEnumerable<T> result = await Task.Run(() =>
                 _tagQueryBuilder
