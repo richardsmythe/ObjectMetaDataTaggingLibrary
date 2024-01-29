@@ -1,33 +1,32 @@
 ﻿using ObjectMetaDataTagging.Interfaces;
+using System;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace ObjectMetaDataTagging.Services
 {
-    public class TagMapper<T> : ITagMapper<T>
+    public class TagMapper<TSource, TTarget> : ITagMapper<TSource, TTarget>
     {
-        /// <summary>
-        /// Maps properties from the source object to the target type asynchronously, allowing tags to be mapped from one tag type to another.
-        /// </summary>
-        /// <param name="sourceObject">The source object from which properties will be mapped.</param>
-        /// <returns>An instance of the target type with mapped properties.</returns>
-        /// <exception cref="ArgumentNullException">
-        /// Thrown when the <paramref name="sourceObject"/> is null.
-        /// </exception>
-        public async Task<T> MapTagsFromOtherType(object sourceObject)
+        public async Task<TTarget> MapTagsBetweenTypes<TSource, TTarget>(TSource sourceObject, TTarget targetObject)
         {
             if (sourceObject == null)
             {
                 throw new ArgumentNullException(nameof(sourceObject));
             }
 
-            var targetType = typeof(T);
+            if (targetObject == null)
+            {
+                throw new ArgumentNullException(nameof(targetObject));
+            }
+
+            var targetType = typeof(TTarget);
             var sourceType = sourceObject.GetType();
 
             var sourceObjProperties = sourceType.GetProperties();
             var targetObjProperties = targetType.GetProperties()
                 .Where(prop => prop.CanWrite)
                 .ToDictionary(prop => prop.Name);
-
-            var targetInstance = Activator.CreateInstance(targetType);
 
             foreach (var sourceProp in sourceObjProperties)
             {
@@ -40,7 +39,7 @@ namespace ObjectMetaDataTagging.Services
 
                 if (value != null && targetProp.PropertyType.IsAssignableFrom(sourceProp.PropertyType))
                 {
-                    targetProp.SetValue(targetInstance, value);
+                    targetProp.SetValue(targetObject, value);
                 }
                 else if (targetProp.PropertyType == typeof(Task) && sourceProp.PropertyType == typeof(Task))
                 {
@@ -50,7 +49,8 @@ namespace ObjectMetaDataTagging.Services
                     }
                 }
             }
-            return (T)targetInstance;
+
+            return targetObject;
         }
     }
 }

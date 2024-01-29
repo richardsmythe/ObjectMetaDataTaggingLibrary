@@ -16,6 +16,7 @@
         public List<object> Parents { get; private set; } = new List<object>();
         public string Type { get; private set; }
 
+        public BaseTag(){}
         public BaseTag(string name, object value, string description = null)
         {
             if (string.IsNullOrWhiteSpace(name))

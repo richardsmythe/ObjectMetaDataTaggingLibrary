@@ -13,14 +13,14 @@ namespace ObjectMetaDataTagging
 
         private readonly IDefaultTaggingService<T> _taggingService;
         private readonly ITagFactory _tagFactory;
-        private readonly ITagMapper<T> _tagMapper;
+        private readonly ITagMapper<T, T> _tagMapper;
         private readonly IDynamicQueryBuilder<T> _tagQueryBuilder;
         
 
         public ObjectMetaDataTaggingFacade(
             IDefaultTaggingService<T> taggingService, 
             ITagFactory tagFactory,
-            ITagMapper<T> tagMapper,
+          ITagMapper<T, T> tagMapper,
             IDynamicQueryBuilder<T> tagQueryBuilder
 
            )
@@ -73,7 +73,12 @@ namespace ObjectMetaDataTagging
         public BaseTag CreateBaseTag(string name, object value, string description) => _tagFactory.CreateBaseTag(name, value, description);
         public IEnumerable<BaseTag> CreateBaseTags(IEnumerable<(string name, object value, string description)> tagList) => _tagFactory.CreateBaseTags(tagList);
 
-        public Task<T> MapTagsBetweenTypes(object sourceObject) => _tagMapper.MapTagsFromOtherType(sourceObject);
+        public async Task<TTarget> MapTagsBetweenTypes<TSource, TTarget>(TSource sourceObject, TTarget targetObject)
+        {
+            return await _tagMapper.MapTagsBetweenTypes(sourceObject, targetObject);
+        }
+
+
         public async Task<IEnumerable<T>> BuildQuery(List<T> source, Func<T, bool> propertyFilter, LogicalOperator logicalOperator = LogicalOperator.OR)
         {
             IEnumerable<T> result = await Task.Run(() =>

@@ -27,7 +27,8 @@ namespace ObjectMetaDataTagging.Interfaces
         Task BulkAddTagsAsync(object o, IEnumerable<T> tags);
         BaseTag CreateBaseTag(string name, object value, string description);
         IEnumerable<BaseTag> CreateBaseTags(IEnumerable<(string name, object value, string description)> tagList);
-        Task<T> MapTagsBetweenTypes(object sourceObject);
+        Task<TTarget> MapTagsBetweenTypes<TSource, TTarget>(TSource sourceObject, TTarget targetObject);
+
         Task<IEnumerable<T>> BuildQuery(List<T> source, Func<T, bool> propertyFilter, LogicalOperator logicalOperator = LogicalOperator.OR);
 
     }

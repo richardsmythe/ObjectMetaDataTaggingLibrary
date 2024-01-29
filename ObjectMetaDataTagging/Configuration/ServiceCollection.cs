@@ -13,7 +13,7 @@ namespace ObjectMetaDataTagging.Configuration
         {
             services.AddSingleton(typeof(IDefaultTaggingService<>), typeof(InMemoryTaggingService<>));
             services.AddSingleton<ITagFactory, TagFactory>();
-            services.AddSingleton(typeof(ITagMapper<>), typeof(TagMapper<>));
+            services.AddSingleton(typeof(ITagMapper<,>), typeof(TagMapper<,>));
             services.AddSingleton(typeof(IDynamicQueryBuilder<>), typeof(DynamicQueryBuilder<>));
             services.AddScoped<IObjectMetaDataTaggingFacade<BaseTag>, ObjectMetaDataTaggingFacade<BaseTag>>();
 
