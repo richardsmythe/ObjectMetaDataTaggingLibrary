@@ -1,11 +1,13 @@
 Object metadata tagging library
 ================================================================
 
-The Object MetaData Tagging Library allows you to manage and query metadata tags associated with objects. This library provides a TaggingManager class that serves as the central point for interacting with various tagging-related functionalities.
+The Object MetaData Tagging Library allows you to manage and query metadata tags associated with objects.
+This library provides a TaggingManager class that serves as the central point for interacting with various tagging-related functionalities.
 
 E.g. var taggingManager = new TaggingManager<BaseTag>();
 
-Adjust the type parameter based on your own types, but they must inhert from BaseTag.
+Adjust the type parameter based on your own types, but they must inhert from BaseTag. 
+Future revisions will eliminate this dependency, but for now all types must derive from BaseTag.
 
 builder.Services.AddObjectMetaDataTagging() In your program.cs file.
 
