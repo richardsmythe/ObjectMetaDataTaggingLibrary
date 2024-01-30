@@ -15,7 +15,7 @@ namespace ObjectMetaDataTagging.Configuration
             services.AddSingleton<ITagFactory, TagFactory>();
             services.AddSingleton(typeof(ITagMapper<,>), typeof(TagMapper<,>));
             services.AddSingleton(typeof(IDynamicQueryBuilder<>), typeof(DynamicQueryBuilder<>));
-            services.AddScoped<IObjectMetaDataTaggingFacade<BaseTag>, ObjectMetaDataTaggingFacade<BaseTag>>();
+            services.AddScoped<ITaggingManager<BaseTag>, TaggingManager<BaseTag>>();
 
             return services;
         }

@@ -8,7 +8,7 @@ using ObjectMetaDataTagging.Utilities;
 
 namespace ObjectMetaDataTagging
 {
-    public class ObjectMetaDataTaggingFacade<T> : IObjectMetaDataTaggingFacade<T> where T : BaseTag
+    public class TaggingManager<T> : ITaggingManager<T> where T : BaseTag
     {
 
         private readonly IDefaultTaggingService<T> _taggingService;
@@ -17,7 +17,7 @@ namespace ObjectMetaDataTagging
         private readonly IDynamicQueryBuilder<T> _tagQueryBuilder;
         
 
-        public ObjectMetaDataTaggingFacade(
+        public TaggingManager(
             IDefaultTaggingService<T> taggingService, 
             ITagFactory tagFactory,
           ITagMapper<T, T> tagMapper,

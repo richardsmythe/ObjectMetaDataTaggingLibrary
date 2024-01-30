@@ -29,11 +29,9 @@ namespace ObjectMetaDataTagging.Test
             Assert.Equal(sourceTagToMap.Name, mappedObject.Name);
             Assert.Equal(sourceTagToMap.Value, mappedObject.Value);
             Assert.Equal(sourceTagToMap.Description, mappedObject.Description);
-            // Add additional assertions based on your mapping logic
 
-            // If you have specific properties in TestTagType, you can check them too
-            Assert.Equal("Test", ((TestTagType)mappedObject).TestProperty1);
-            Assert.Equal("Test2", ((TestTagType)mappedObject).TestProperty2);
+            Assert.Equal("Test", mappedObject.TestProperty1);
+            Assert.Equal("Test2", mappedObject.TestProperty2);
         }
 
         public class PersonTransaction

@@ -9,7 +9,7 @@ using ObjectMetaDataTagging.Utilities;
 
 namespace ObjectMetaDataTagging.Interfaces
 {
-    public interface IObjectMetaDataTaggingFacade<T> where T : BaseTag
+    public interface ITaggingManager<T> where T : BaseTag
     {
         event EventHandler<AsyncTagAddedEventArgs<T>> TagAdded;
         event EventHandler<AsyncTagRemovedEventArgs<T>> TagRemoved;

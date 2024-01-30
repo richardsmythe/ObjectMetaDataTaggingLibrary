@@ -1,25 +1,86 @@
 Object metadata tagging library
 ================================================================
-To use this library, add:
 
-builder.Services.AddObjectMetaDataTagging()
+The Object MetaData Tagging Library allows you to manage and query metadata tags associated with objects. This library provides a TaggingManager class that serves as the central point for interacting with various tagging-related functionalities.
 
-In your program.cs file.
+E.g. var taggingManager = new TaggingManager<BaseTag>();
 
-Quick start instructions:
+Adjust the type parameter based on your own types, but they must inhert from BaseTag.
 
-Developers can easily customise tagging behaviour by implementing the IDefaultTaggingService<T> interface. 
-This interface defines methods for managing tags associated with objects, allowing you to tailor the functionality to meet your specific requirements. 
-The DefaultTaggingService<T> in this library serves as a versatile entry point for managing tagging operations. 
-It is designed to allow developers to easily switch between different implementations of the IDefaultTaggingService<T> interface without modifying their application code.
+builder.Services.AddObjectMetaDataTagging() In your program.cs file.
 
-If you prefer to use the tagging features out of the box without customisation, you can directly utilise the InMemoryTaggingService<T> class provided by the library. 
-This class implements the default tagging behavior, and you can use it as-is or extend its functionality by overriding specific methods.
+The TaggingManager instance provides methods for various overridable tagging operations, such as:
 
-To ensure compatibility, make sure your tag data model extends the BaseTag class provided by the library. 
+Add a Tag:
 
-Utilise the TaggingEventManager<TAdded, TRemoved, TUpdated> class to manage tag-related events like addition, removal, and updates.
-Simply subscribe to the TagAdded, TagRemoved, and TagUpdated events to execute custom logic when these events occur. 
+await taggingManager.SetTagAsync(myObject, myTag);
 
-Customise event handling by implementing the IAsyncEventHandler<T> interface for specific event arguments (AsyncTagAddedEventArgs, AsyncTagRemovedEventArgs, AsyncTagUpdatedEventArgs). 
-Remember to handle exceptions appropriately, using specific exception types like TagAdditionException, TagRemovalException, and TagUpdateException provided by the library.
+Bulk add Tag:
+
+await taggingManager.BulkAddTagsAsync(targetObject, tagsToAdd);
+
+Update a Tag:
+
+await taggingManager.UpdateTagAsync(myObject, tagId, newTag);
+
+Get All Tags:
+
+var allTags = await taggingManager.GetAllTags(myObject);
+
+Remove All Tags:
+
+await taggingManager.RemoveAllTagsAsync(myObject);
+
+Check if Object Has a Tag:
+
+var hasTag = taggingManager.HasTag(myObject, tagId)
+
+Mapping Between Object Types:
+
+var targetObject = new TargetObjectType();
+await taggingManager.MapTagsBetweenTypes(sourceObject, targetObject);
+
+Build dynamic queries based on your own criteria:
+
+Func<BaseTag, bool> tagFilter = tag => tag.Name == "TagName";
+var filteredTags = await taggingManager.BuildQuery(allTags, tagFilter, LogicalOperator.AND);
+
+Create Tags Using TagFactory, either single or multiple tags:
+
+var tagFactory = new TagFactory();
+var baseTag = tagFactory.CreateBaseTag("TagName", "TagValue", "TagDescription");
+
+If you have a list of tag specifications, you can create multiple tags at once:
+
+var tags = tagFactory.CreateBaseTags(tagList);
+
+
+Event Subscription:
+The TaggingManager provides events that allow you to respond to tag-related actions. These events can be useful for implementing custom logic or triggering additional actions in your application.
+
+You can subscribe to events using standard C# event handlers:
+
+taggingManager.TagAdded += (sender, args) => { /* Handle added tag event */ };
+taggingManager.TagRemoved += (sender, args) => { /* Handle removed tag event */ };
+taggingManager.TagUpdated += (sender, args) => { /* Handle updated tag event */ };
+
+Object Graph Builder:
+
+The ObjectGraphBuilder class is part of the tagging library and provides functionality to visualise the relationships between tagged objects in a graph format. 
+This can be useful for understanding the interconnectedness of objects based on their tags.
+
+var objectGraph = await _taggingManager.GetObjectGraph();
+ObjectGraphBuilder.PrintObjectGraph(objectGraph);
+
+A custom tagging service can be created if you don't want to use the default in-memory tagging service. 
+When setting up the TaggingManager, use your custom tagging service instead of InMemoryTaggingService.
+
+For example:
+
+var databaseTaggingService = new DatabaseTaggingService<BaseTag>(/* ... other dependencies ... */);
+var taggingManager = new TaggingManager<BaseTag>(
+    databaseTaggingService,
+    new TagFactory(),
+    new TagMapper<BaseTag, BaseTag>(),
+    new DynamicQueryBuilder<BaseTag>()
+);
