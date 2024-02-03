@@ -1,4 +1,5 @@
 ﻿using ObjectMetaDataTagging.Models.TagModels;
+using ObjectMetaDataTaggingLibrary.Services;
 using System.Collections.Concurrent;
 
 namespace ObjectMetaDataTagging.Utilities
@@ -21,13 +22,13 @@ namespace ObjectMetaDataTagging.Utilities
     }
 
     public class ObjectGraphBuilder
-    {
-        public static async Task<List<GraphNode>> BuildObjectGraph(ConcurrentDictionary<object, Dictionary<Guid, BaseTag>> concurrentDictionary)
+    {        
+        public static async Task<List<GraphNode>> BuildObjectGraph(CustomHashTable<object, Dictionary<Guid, BaseTag>> cht)
         {
             var graphNodes = new List<GraphNode>();
             var visitedIds = new HashSet<Guid>();
 
-            foreach (var kvp in concurrentDictionary)
+            foreach (var kvp in cht)
             {
                 var rootObject = kvp.Key;
 
@@ -36,7 +37,7 @@ namespace ObjectMetaDataTagging.Utilities
 
                 if (rootObject != null)
                 {
-                    var rootNode = await BuildSubgraph(rootObject, objectName, concurrentDictionary, visitedIds);
+                    var rootNode = await BuildSubgraph(rootObject, objectName, cht, visitedIds);
                     if (rootNode != null)
                     {
                         graphNodes.Add(rootNode);
@@ -51,7 +52,7 @@ namespace ObjectMetaDataTagging.Utilities
             return graphNodes;
         }
 
-        private static async Task<GraphNode?> BuildSubgraph(object rootObject, string objectName, ConcurrentDictionary<object, Dictionary<Guid, BaseTag>> concurrentDictionary, HashSet<Guid> visitedIds)
+        private static async Task<GraphNode?> BuildSubgraph(object rootObject, string objectName, CustomHashTable<object, Dictionary<Guid, BaseTag>> cht, HashSet<Guid> visitedIds)
         {
             try
             {
@@ -70,20 +71,20 @@ namespace ObjectMetaDataTagging.Utilities
 
                 var node = new GraphNode((Guid)objectId, objectName);
 
-                if (concurrentDictionary.TryGetValue(rootObject, out var tags))
+                if (cht.TryGetValue(rootObject, out var tags))
                 {
                     if (tags != null)
                     {
                         foreach (var tag in tags.Values)
                         {
-                            var childNode = await BuildSubgraph(tag, tag.Name, concurrentDictionary, visitedIds);
+                            var childNode = await BuildSubgraph(tag, tag.Name, cht, visitedIds);
 
                             if (childNode != null)
                             {
                                 node.Children.Add(childNode);
 
                                 // Recursively process all child tag depths
-                                await ProcessChildTags(tag.ChildTags, childNode, concurrentDictionary, visitedIds);
+                                await ProcessChildTags(tag.ChildTags, childNode, cht, visitedIds);
                             }
                         }
                     }
@@ -97,17 +98,17 @@ namespace ObjectMetaDataTagging.Utilities
             }
         }
 
-        private static async Task ProcessChildTags(IEnumerable<BaseTag> childTags, GraphNode parentNode, ConcurrentDictionary<object, Dictionary<Guid, BaseTag>> concurrentDictionary, HashSet<Guid> visitedIds)
+        private static async Task ProcessChildTags(IEnumerable<BaseTag> childTags, GraphNode parentNode, CustomHashTable<object, Dictionary<Guid, BaseTag>> cht, HashSet<Guid> visitedIds)
         {
             foreach (var childTag in childTags)
             {
-                var childNode = await BuildSubgraph(childTag, childTag.Name, concurrentDictionary, visitedIds);
+                var childNode = await BuildSubgraph(childTag, childTag.Name, cht, visitedIds);
 
                 if (childNode != null)
                 {
                     parentNode.Children.Add(childNode);
 
-                    await ProcessChildTags(childTag.ChildTags, childNode, concurrentDictionary, visitedIds);
+                    await ProcessChildTags(childTag.ChildTags, childNode, cht, visitedIds);
                 }
             }
         }

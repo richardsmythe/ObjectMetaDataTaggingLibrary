@@ -4,6 +4,7 @@ using ObjectMetaDataTagging.Exceptions;
 using ObjectMetaDataTagging.Interfaces;
 using ObjectMetaDataTagging.Models.TagModels;
 using ObjectMetaDataTagging.Utilities;
+using ObjectMetaDataTaggingLibrary.Services;
 using System.Collections.Concurrent;
 
 namespace ObjectMetaDataTagging.Services
@@ -17,7 +18,10 @@ namespace ObjectMetaDataTagging.Services
         public event EventHandler<AsyncTagAddedEventArgs<T>> TagAdded;
         public event EventHandler<AsyncTagRemovedEventArgs<T>> TagRemoved;
         public event EventHandler<AsyncTagUpdatedEventArgs<T>> TagUpdated;
-        public readonly ConcurrentDictionary<object, Dictionary<Guid, BaseTag>> data = new ConcurrentDictionary<object, Dictionary<Guid, BaseTag>>();
+
+        public readonly CustomHashTable<object, Dictionary<Guid, BaseTag>> data = new CustomHashTable<object, Dictionary<Guid, BaseTag>>();
+
+        //public readonly ConcurrentDictionary<object, Dictionary<Guid, BaseTag>> data = new ConcurrentDictionary<object, Dictionary<Guid, BaseTag>>();
 
         protected virtual void OnTagAdded(AsyncTagAddedEventArgs<T> e) => TagAdded?.Invoke(this, e);
         protected virtual void OnTagRemoved(AsyncTagRemovedEventArgs<T> e) => TagRemoved?.Invoke(this, e);
@@ -100,7 +104,7 @@ namespace ObjectMetaDataTagging.Services
                     throw new ObjectNotFoundException("No object supplied.");
                 }
 
-                if (data.Remove(o, out _))
+                if (data.TryRemove(o, out _))
                 {
                     return true;
                 }
