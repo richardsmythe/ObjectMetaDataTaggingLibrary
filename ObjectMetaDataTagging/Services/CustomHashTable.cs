@@ -3,17 +3,17 @@ namespace ObjectMetaDataTaggingLibrary.Services
 {
     public sealed class CustomHashTable<TKey, TValue>
     {
+        const int PRIMEHASH = 750707;
         private const int INITIALCAPACITY = 4;       // Initial capacity for the internal array
         private const double LOADFACTOR = 0.75;      // Threshold for when resizing will happen. When the number of entries is 75% or more of the current array size
         private int _count;                          // Number of entries in the hashtable
         private List<Node<TKey, TValue>>[] _buckets; // Internal array to store key-value pairs
-        private readonly int _prime;
+       
         private readonly object _lock = new object();
         private static Random random = new Random();
 
         public CustomHashTable()
-        {
-            _prime = GenerateRandomPrime();
+        {  
             _buckets = new List<Node<TKey, TValue>>[INITIALCAPACITY];
         }
 
@@ -132,46 +132,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
                 removedValue = default;
                 return false;
             }
-        }
-
-
-        public void Print()
-        {
-            for (int i = 0; i < _buckets.Length; i++)
-            {
-                List<Node<TKey, TValue>> bucket = _buckets[i];
-
-                if (bucket == null || bucket.Count == 0)
-                {
-                    Console.WriteLine($"[{i}]: null");
-                }
-                else
-                {
-                    Console.Write($"[{i}]: ");
-
-                    for (int j = 0; j < bucket.Count; j++)
-                    {
-                        var node = bucket[j];
-
-                        Console.Write($"({node.Key}, {node.Value})");
-
-                        if (node.Next != null)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.Write(" --> Collision --> ");
-                            Console.ResetColor();
-                        }
-
-                        if (j < bucket.Count - 1)
-                        {
-                            Console.Write(" | ");
-                        }
-                    }
-
-                    Console.WriteLine();
-                }
-            }
-        }
+        }       
 
         private int PolynomialHashFunction(TKey key)
         {
@@ -187,7 +148,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
             int hashCode = 0;
             for (int i = 0; i < keyStr.Length; i++)
             {
-                hashCode = (hashCode * _prime + keyStr[i]) % _buckets.Length;
+                hashCode = (hashCode * PRIMEHASH + keyStr[i]) % _buckets.Length;
             }
 
             return hashCode;
@@ -296,38 +257,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
                 power *= 2;
             }
             return power;
-        }
-
-        private int GenerateRandomPrime()
-        {
-            int min = 9999;
-            int max = 19999;
-            int prime = 0;
-            bool isPrime = false;
-
-            while (!isPrime)
-            {
-                isPrime = true;
-                prime = random.Next(min, max + 1);
-
-                if (prime % 2 == 0 && prime > 2)
-                {
-                    isPrime = false;  // Skip even numbers greater than 2
-                    continue;
-                }
-
-                for (int i = 3; i <= Math.Sqrt(prime); i += 2)
-                {
-                    if (prime % i == 0)
-                    {
-                        isPrime = false;
-                        break;
-                    }
-                }
-            }
-
-            return prime;
-        }
+        }       
     }
 
     public class Node<TKey, TValue>
