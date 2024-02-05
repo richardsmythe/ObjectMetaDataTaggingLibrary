@@ -6,7 +6,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
 {
     public sealed class CustomHashTable<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
     {
-        const int PRIMEHASH = 99991;                 // Used as a multiplier for the hash function.
+
         private const int INITIALCAPACITY = 4;       // Default capacity.
         private const double LOADFACTOR = 0.75;      // Threshold for when resizing will happen. When the number of entries is 75% or more of the current array size
         private int _count;                          // Number of entries in the hash table
@@ -43,6 +43,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsKey(TKey key)
         {
             try
@@ -56,11 +57,15 @@ namespace ObjectMetaDataTaggingLibrary.Services
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
             lock (_lock)
             {
-                int index = MultiplicativeHashFunction(key);
+                //int index = MultiplicativeHashFunction(key);
+                //uint index = FNV1aHashFunction(key);
+                uint index = DJB2HashFunction(key);
+
                 Node<TKey, TValue> currentNode = _buckets[index];
 
                 while (currentNode != null)
@@ -79,11 +84,15 @@ namespace ObjectMetaDataTaggingLibrary.Services
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryRemove(TKey key, out TValue removedValue)
         {
             lock (_lock)
             {
-                int index = MultiplicativeHashFunction(key);
+                //int index = MultiplicativeHashFunction(key);
+                //uint index = FNV1aHashFunction(key);
+                uint index = DJB2HashFunction(key);
+
                 Node<TKey, TValue> currentNode = _buckets[index];
                 Node<TKey, TValue> previousNode = null;
 
@@ -115,6 +124,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TValue GetOrAdd(TKey key, TValue value)
         {
             lock (_lock)
@@ -148,33 +158,49 @@ namespace ObjectMetaDataTaggingLibrary.Services
             }
         }
 
-        private int MultiplicativeHashFunction(TKey key)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint DJB2HashFunction(TKey key)
         {
-            int hashCode = key.GetHashCode() * PRIMEHASH;
-            return (hashCode & 0x7FFFFFFF) % _buckets.Length;
+            uint hash = 2166136261;
+
+            foreach (char c in key.ToString())
+            {
+                hash = (hash << 5) + hash + c;
+            }
+
+            return (uint)(hash % _buckets.Length); ;
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(TKey key, TValue value)
         {
             lock (_lock)
             {
                 ResizeIfNecessary();
 
-                int index = MultiplicativeHashFunction(key);
-                Node<TKey, TValue> newNode = new Node<TKey, TValue> { Key = key, Value = value, Next = _buckets[index] };
+                //int index = MultiplicativeHashFunction(key);
+                // uint index = FNV1aHashFunction(key);
+                uint index = DJB2HashFunction(key);
 
+                Node<TKey, TValue> currentNode = _buckets[index];
+
+                // Key doesn't exist, add a new node to the linked list
+                Node<TKey, TValue> newNode = new Node<TKey, TValue> { Key = key, Value = value, Next = _buckets[index] };
                 _buckets[index] = newNode;
                 _count++;
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TValue Get(TKey key)
         {
             lock (_lock)
             {
-                int index = MultiplicativeHashFunction(key);
+                //int index = MultiplicativeHashFunction(key);
+                //uint index = FNV1aHashFunction(key);
+                uint index = DJB2HashFunction(key);
+
                 Node<TKey, TValue> currentNode = _buckets[index];
 
                 while (currentNode != null)
@@ -191,7 +217,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ResizeIfNecessary()
         {
             if (LoadFactor >= LOADFACTOR)
@@ -209,7 +235,10 @@ namespace ObjectMetaDataTaggingLibrary.Services
 
                     while (currentNode != null)
                     {
-                        int newIndex = MultiplicativeHashFunction(currentNode.Key);
+                        // int newIndex = MultiplicativeHashFunction(currentNode.Key);
+                        // uint newIndex = FNV1aHashFunction(currentNode.Key);
+                        uint newIndex = DJB2HashFunction(currentNode.Key);
+
                         Node<TKey, TValue> nextNode = currentNode.Next;
 
                         currentNode.Next = newBuckets[newIndex];
@@ -223,6 +252,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int GetNextPowerOfTwo(int x)
         {
             // E.g., the next power of two after 5 is 8 so return 8.
@@ -232,7 +262,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
                 power *= 2;
             }
             return power;
-        }
+        }       
     }
 
     public class Node<TKey, TValue>
