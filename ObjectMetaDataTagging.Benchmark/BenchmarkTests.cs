@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Toolchains.InProcess.Emit;
 using ObjectMetaDataTagging.Interfaces;
 using ObjectMetaDataTagging.Models.TagModels;
 using ObjectMetaDataTagging.Services;
@@ -11,15 +12,14 @@ using System.Threading.Tasks;
 namespace ObjectMetaDataTagging.Benchmark
 {
     [MemoryDiagnoser]
-    [SimpleJob(launchCount: 1, warmupCount: 1, iterationCount: 1)]
+    [SimpleJob(launchCount: 2, warmupCount: 2, iterationCount: 2)]
+
     public class BenchmarkTests
     {
-        //private readonly ITaggingManager<BaseTag> _taggingManager;
         private readonly InMemoryTaggingService<BaseTag> _inMemoryTaggingService;
 
         public BenchmarkTests()
         {
-            //_taggingManager = taggingManager;
             _inMemoryTaggingService = new InMemoryTaggingService<BaseTag>();
         }
 
