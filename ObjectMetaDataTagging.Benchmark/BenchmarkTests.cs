@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Toolchains.InProcess.Emit;
+using ObjectMetaDataTagging.Helpers;
 using ObjectMetaDataTagging.Interfaces;
 using ObjectMetaDataTagging.Models.TagModels;
 using ObjectMetaDataTagging.Services;
@@ -17,19 +18,43 @@ namespace ObjectMetaDataTagging.Benchmark
     public class BenchmarkTests
     {
         private readonly InMemoryTaggingService<BaseTag> _inMemoryTaggingService;
+        private readonly TagFactory _tagFactory;
 
         public BenchmarkTests()
         {
+            _tagFactory = new TagFactory();
             _inMemoryTaggingService = new InMemoryTaggingService<BaseTag>();
         }
 
         [Benchmark]
-        public async Task SetTagAsyncBenchmark()
+        public async Task SetSTagAsyncBenchmark()
         {   
             var testObject = new PersonTranscation();
             var tag = new BaseTag("TagName", "TagValue", "TagDescription");
 
             await _inMemoryTaggingService.SetTagAsync(testObject, tag);
+        }
+
+        [Benchmark]
+        public async Task SetMultipleTagsAsyncBenchmark()
+        {
+            var testObject = new PersonTranscation();
+            
+
+            var tagData = new List<(string name, object value, string description)>();
+
+            for (int i = 1; i <= 25; i++)
+            {
+                string tagName = $"Tag{i}";
+                string tagValue = $"Value{i}";
+                string tagDescription = $"Description{i}";
+
+                tagData.Add((tagName, tagValue, tagDescription));
+            }
+
+            IEnumerable<BaseTag> tags = _tagFactory.CreateBaseTags(tagData);
+
+            await _inMemoryTaggingService.BulkAddTagsAsync(testObject, tags);
         }
     }
 

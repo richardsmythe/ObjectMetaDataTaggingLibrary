@@ -179,15 +179,27 @@ namespace ObjectMetaDataTaggingLibrary.Services
             {
                 ResizeIfNecessary();
 
-                //int index = MultiplicativeHashFunction(key);
-                // uint index = FNV1aHashFunction(key);
                 uint index = DJB2HashFunction(key);
 
+                // Get current node at the index
                 Node<TKey, TValue> currentNode = _buckets[index];
 
-                // Key doesn't exist, add a new node to the linked list
-                Node<TKey, TValue> newNode = new Node<TKey, TValue> { Key = key, Value = value, Next = _buckets[index] };
-                _buckets[index] = newNode;
+
+                if (currentNode != null)
+                {
+                    // If collision detected
+                    Console.WriteLine($"Collision occurred at index {index} for key {key}");                    
+                    while (currentNode.Next != null)
+                    {
+                        currentNode = currentNode.Next;
+                    }
+                    currentNode.Next = new Node<TKey, TValue> { Key = key, Value = value };
+                }
+                else
+                {
+                    // if key doesn't exist, add a new node to the linked list
+                    _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value };
+                }
                 _count++;
             }
         }
@@ -262,7 +274,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
                 power *= 2;
             }
             return power;
-        }       
+        }
     }
 
     public class Node<TKey, TValue>
