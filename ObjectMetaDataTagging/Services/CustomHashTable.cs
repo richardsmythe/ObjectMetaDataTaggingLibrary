@@ -202,9 +202,9 @@ namespace ObjectMetaDataTaggingLibrary.Services
                             return;
                         }
 
+                        // If we have probed all slots, resize and start again
                         if (probeCount == _buckets.Length)
                         {
-                            // If we have probed all slots, resize and start again
                             ResizeIfNecessary();
                             index = DJB2HashFunction(key, _buckets.Length);
                             probeCount = 0;
