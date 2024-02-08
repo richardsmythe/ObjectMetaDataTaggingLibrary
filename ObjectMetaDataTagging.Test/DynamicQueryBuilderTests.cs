@@ -1,7 +1,6 @@
 ﻿using ObjectMetaDataTagging.Models.QueryModels;
 using ObjectMetaDataTagging.Models.TagModels;
 using ObjectMetaDataTagging.Services;
-using Xunit;
 
 namespace ObjectMetaDataTagging.Test
 {

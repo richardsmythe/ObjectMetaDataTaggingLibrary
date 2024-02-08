@@ -8,7 +8,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
     {
 
         private const int INITIALCAPACITY = 4;       // Default capacity.
-        private const double LOADFACTOR = 0.75;      // Threshold for when resizing will happen. When the number of entries is 75% or more of the current array size
+        private const double LOADFACTOR = 0.35;      // Threshold for when resizing will happen. When the number of entries is 75% or more of the current array size
         private int _count;                          // Number of entries in the hash table
         private Node<TKey, TValue>[] _buckets;       // Internal array to store key-value pairs
         private readonly object _lock = new object();
@@ -64,7 +64,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
             {
                 //int index = MultiplicativeHashFunction(key);
                 //uint index = FNV1aHashFunction(key);
-                uint index = DJB2HashFunction(key);
+                uint index = DJB2HashFunction(key, _buckets.Length);
 
                 Node<TKey, TValue> currentNode = _buckets[index];
 
@@ -91,7 +91,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
             {
                 //int index = MultiplicativeHashFunction(key);
                 //uint index = FNV1aHashFunction(key);
-                uint index = DJB2HashFunction(key);
+                uint index = DJB2HashFunction(key, _buckets.Length);
 
                 Node<TKey, TValue> currentNode = _buckets[index];
                 Node<TKey, TValue> previousNode = null;
@@ -159,17 +159,17 @@ namespace ObjectMetaDataTaggingLibrary.Services
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint DJB2HashFunction(TKey key)
+        public uint DJB2HashFunction(TKey key, int capacity)
         {
+            // hash function needs to know the current capacity 
             uint hash = 2166136261;
-
             foreach (char c in key.ToString())
             {
                 hash = (hash << 5) + hash + c;
             }
-
-            return (uint)(hash % _buckets.Length); ;
+            return (uint)(hash % capacity);
         }
+
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -179,30 +179,50 @@ namespace ObjectMetaDataTaggingLibrary.Services
             {
                 ResizeIfNecessary();
 
-                uint index = DJB2HashFunction(key);
+                uint index = DJB2HashFunction(key, _buckets.Length);
 
                 // Get current node at the index
                 Node<TKey, TValue> currentNode = _buckets[index];
 
-
                 if (currentNode != null)
                 {
-                    // If collision detected
-                    Console.WriteLine($"Collision occurred at index {index} for key {key}");                    
-                    while (currentNode.Next != null)
+                    // If collision detected, perform linear probing
+                    int probeCount = 0;
+                    Console.WriteLine($"Collision occurred at index {index} for key {key}");
+                    while (currentNode != null)
                     {
-                        currentNode = currentNode.Next;
+                        probeCount++;
+                        index = (index + 1) % (uint)_buckets.Length; // move to the next slot
+
+                        // if current slot is available, insert the new node
+                        if (_buckets[index] == null)
+                        {
+                            _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value };
+                            _count++;
+                            return;
+                        }
+
+                        if (probeCount == _buckets.Length)
+                        {
+                            // If we have probed all slots, resize and start again
+                            ResizeIfNecessary();
+                            index = DJB2HashFunction(key, _buckets.Length);
+                            probeCount = 0;
+                        }
+
+                        currentNode = _buckets[index];
                     }
-                    currentNode.Next = new Node<TKey, TValue> { Key = key, Value = value };
                 }
                 else
                 {
-                    // if key doesn't exist, add a new node to the linked list
+                    // if key doesn't exist
                     _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value };
                 }
                 _count++;
             }
         }
+
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TValue Get(TKey key)
@@ -211,7 +231,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
             {
                 //int index = MultiplicativeHashFunction(key);
                 //uint index = FNV1aHashFunction(key);
-                uint index = DJB2HashFunction(key);
+                uint index = DJB2HashFunction(key, _buckets.Length);
 
                 Node<TKey, TValue> currentNode = _buckets[index];
 
@@ -247,9 +267,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
 
                     while (currentNode != null)
                     {
-                        // int newIndex = MultiplicativeHashFunction(currentNode.Key);
-                        // uint newIndex = FNV1aHashFunction(currentNode.Key);
-                        uint newIndex = DJB2HashFunction(currentNode.Key);
+                        uint newIndex = DJB2HashFunction(currentNode.Key, newCapacity);
 
                         Node<TKey, TValue> nextNode = currentNode.Next;
 

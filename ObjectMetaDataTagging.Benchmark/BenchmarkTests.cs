@@ -1,14 +1,8 @@
 ﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Toolchains.InProcess.Emit;
 using ObjectMetaDataTagging.Helpers;
-using ObjectMetaDataTagging.Interfaces;
 using ObjectMetaDataTagging.Models.TagModels;
 using ObjectMetaDataTagging.Services;
-using ObjectMetaDataTagging.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
 
 namespace ObjectMetaDataTagging.Benchmark
 {
@@ -27,7 +21,7 @@ namespace ObjectMetaDataTagging.Benchmark
         }
 
         [Benchmark]
-        public async Task SetSTagAsyncBenchmark()
+        public async Task SetsTagAsyncBenchmark()
         {   
             var testObject = new PersonTranscation();
             var tag = new BaseTag("TagName", "TagValue", "TagDescription");
