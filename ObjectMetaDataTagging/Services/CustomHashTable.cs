@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace ObjectMetaDataTaggingLibrary.Services
@@ -7,7 +8,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
     public sealed class CustomHashTable<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
     {
 
-        private const int INITIALCAPACITY = 4;       // Default capacity.
+        private const int INITIALCAPACITY = 2;       // Default capacity.
         private const double LOADFACTOR = 0.35;      // Threshold for when resizing will happen. When the number of entries is 75% or more of the current array size
         private int _count;                          // Number of entries in the hash table
         private Node<TKey, TValue>[] _buckets;       // Internal array to store key-value pairs
@@ -188,7 +189,6 @@ namespace ObjectMetaDataTaggingLibrary.Services
                 {
                     // If collision detected, perform linear probing
                     int probeCount = 0;
-                    Console.WriteLine($"Collision occurred at index {index} for key {key}");
                     while (currentNode != null)
                     {
                         probeCount++;
@@ -202,9 +202,9 @@ namespace ObjectMetaDataTaggingLibrary.Services
                             return;
                         }
 
-                        // If we have probed all slots, resize and start again
                         if (probeCount == _buckets.Length)
                         {
+                            // If we have probed all slots, resize and start again
                             ResizeIfNecessary();
                             index = DJB2HashFunction(key, _buckets.Length);
                             probeCount = 0;
@@ -257,7 +257,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
                 // Resize the internal array when the load factor exceeds 0.75.
                 // Ensures that the resulting newCapacity is the smallest power of two that
                 // is greater than or equal to the doubled current size.
-                int newCapacity = GetNextPowerOfTwo(_buckets.Length * 2);
+                int newCapacity = PowerOf2((int)(_buckets.Length * 1.5));
                 Node<TKey, TValue>[] newBuckets = new Node<TKey, TValue>[newCapacity];
 
                 // Rehash existing entries into the new array
@@ -283,15 +283,50 @@ namespace ObjectMetaDataTaggingLibrary.Services
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int GetNextPowerOfTwo(int x)
+        internal static int PowerOf2(int capacity)
         {
-            // E.g., the next power of two after 5 is 8 so return 8.
-            int power = 1;
-            while (power < x)
+            return (int)BitOperations.RoundUpToPowerOf2((uint)capacity);
+        }
+
+        public void Print()
+        {
+            lock (_lock)
             {
-                power *= 2;
+                for (int i = 0; i < _buckets.Length; i++)
+                {
+                    Node<TKey, TValue> currentNode = _buckets[i];
+
+                    if (currentNode == null)
+                    {
+                        Console.WriteLine($"[{i}]: null");
+                    }
+                    else
+                    {
+                        Console.Write($"[{i}]: ");
+
+                        while (currentNode != null)
+                        {
+                            Console.Write($"({currentNode.Key}, {currentNode.Value})");
+
+                            if (currentNode.Next != null)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.Write(" --> Collision --> ");
+                                Console.ResetColor();
+                            }
+
+                            currentNode = currentNode.Next;
+
+                            if (currentNode != null)
+                            {
+                                Console.Write(" | ");
+                            }
+                        }
+
+                        Console.WriteLine();
+                    }
+                }
             }
-            return power;
         }
     }
 
@@ -301,4 +336,5 @@ namespace ObjectMetaDataTaggingLibrary.Services
         public TValue Value { get; set; }
         public Node<TKey, TValue> Next { get; set; }
     }
+
 }
