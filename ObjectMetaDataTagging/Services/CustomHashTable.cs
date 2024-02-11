@@ -9,7 +9,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
     {
 
         private const int INITIALCAPACITY = 2;       // Default capacity.
-        private const double LOADFACTOR = 0.35;      // Threshold for when resizing will happen. When the number of entries is 75% or more of the current array size
+        private const double LOADFACTOR = 0.75;      // Threshold for when resizing will happen. When the number of entries is 75% or more of the current array size
         private int _count;                          // Number of entries in the hash table
         private Node<TKey, TValue>[] _buckets;       // Internal array to store key-value pairs
         private readonly object _lock = new object();
@@ -159,19 +159,32 @@ namespace ObjectMetaDataTaggingLibrary.Services
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint DJB2HashFunction(TKey key, int capacity)
         {
-            // hash function needs to know the current capacity 
+            // chosen to implement to DJB2 as it's simple, fast and has good distrubution.
+            // slightly optimised DJB2 for handling strings and non string
+            //  - early Exit for non-string keys
+            //  - determines length of string to avoid repeated calls
+            //  - combines the hash value with the ASCII value of each character in the string
+
             uint hash = 2166136261;
-            foreach (char c in key.ToString())
+
+            if (key is string strKey)
             {
-                hash = (hash << 5) + hash + c;
+                int len = strKey.Length;
+                for (int i = 0; i < len; i++)
+                {
+                    hash = (hash << 5) + hash + strKey[i];
+                }
             }
+            else
+            {
+                int keyHashCode = key!.GetHashCode();
+                hash = (hash << 5) + hash + (uint)keyHashCode;
+            }
+
             return (uint)(hash % capacity);
         }
-
-
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(TKey key, TValue value)
