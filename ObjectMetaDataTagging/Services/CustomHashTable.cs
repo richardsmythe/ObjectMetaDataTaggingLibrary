@@ -9,7 +9,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
     {
 
         private const int INITIALCAPACITY = 2;       // Default capacity.
-        private const double LOADFACTOR = 0.75;      // Threshold for when resizing will happen. When the number of entries is 75% or more of the current array size
+        private const double LOADFACTOR = 0.35;      // Threshold for when resizing will happen. When the number of entries is 75% or more of the current array size
         private int _count;                          // Number of entries in the hash table
         private Node<TKey, TValue>[] _buckets;       // Internal array to store key-value pairs
         private readonly object _lock = new object();
@@ -63,15 +63,14 @@ namespace ObjectMetaDataTaggingLibrary.Services
         {
             lock (_lock)
             {
-                //int index = MultiplicativeHashFunction(key);
-                //uint index = FNV1aHashFunction(key);
-                uint index = DJB2HashFunction(key, _buckets.Length);
+                uint hash = DJB2HashFunction(key, _buckets.Length);
+                uint index = hash;
 
                 Node<TKey, TValue> currentNode = _buckets[index];
 
                 while (currentNode != null)
                 {
-                    if (currentNode.Key.Equals(key))
+                    if (currentNode.Hash == hash && currentNode.Key.Equals(key))
                     {
                         value = currentNode.Value;
                         return true;
@@ -90,8 +89,6 @@ namespace ObjectMetaDataTaggingLibrary.Services
         {
             lock (_lock)
             {
-                //int index = MultiplicativeHashFunction(key);
-                //uint index = FNV1aHashFunction(key);
                 uint index = DJB2HashFunction(key, _buckets.Length);
 
                 Node<TKey, TValue> currentNode = _buckets[index];
@@ -167,7 +164,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
             //  - determines length of string to avoid repeated calls
             //  - combines the hash value with the ASCII value of each character in the string
 
-            uint hash = 2166136261;
+            uint hash = 2166;
 
             if (key is string strKey)
             {
@@ -179,12 +176,16 @@ namespace ObjectMetaDataTaggingLibrary.Services
             }
             else
             {
+                // mix the bits of hash value with the bits of the hash code of the key (keyHashCode).
+                // The XOR operation introduces variability, and the multiplication by the pmixing operation
+                // is used to reduce clustering and improve the distribution of hash codes
                 int keyHashCode = key!.GetHashCode();
-                hash = (hash << 5) + hash + (uint)keyHashCode;
+                hash = (hash ^ (uint)keyHashCode) * 0x9E3779B9;
             }
 
             return (uint)(hash % capacity);
         }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(TKey key, TValue value)
@@ -193,7 +194,8 @@ namespace ObjectMetaDataTaggingLibrary.Services
             {
                 ResizeIfNecessary();
 
-                uint index = DJB2HashFunction(key, _buckets.Length);
+                uint hash = DJB2HashFunction(key, _buckets.Length);
+                uint index = hash;
 
                 // Get current node at the index
                 Node<TKey, TValue> currentNode = _buckets[index];
@@ -210,7 +212,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
                         // if current slot is available, insert the new node
                         if (_buckets[index] == null)
                         {
-                            _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value };
+                            _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value, Hash = hash };
                             _count++;
                             return;
                         }
@@ -229,7 +231,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
                 else
                 {
                     // if key doesn't exist
-                    _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value };
+                    _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value, Hash = hash };
                 }
                 _count++;
             }
@@ -242,15 +244,14 @@ namespace ObjectMetaDataTaggingLibrary.Services
         {
             lock (_lock)
             {
-                //int index = MultiplicativeHashFunction(key);
-                //uint index = FNV1aHashFunction(key);
-                uint index = DJB2HashFunction(key, _buckets.Length);
+                uint hash = DJB2HashFunction(key, _buckets.Length);
+                uint index = hash;
 
                 Node<TKey, TValue> currentNode = _buckets[index];
 
                 while (currentNode != null)
                 {
-                    if (currentNode.Key.Equals(key))
+                    if (currentNode.Hash == hash && currentNode.Key.Equals(key))
                     {
                         return currentNode.Value;
                     }
@@ -270,7 +271,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
                 // Resize the internal array when the load factor exceeds 0.75.
                 // Ensures that the resulting newCapacity is the smallest power of two that
                 // is greater than or equal to the doubled current size.
-                int newCapacity = PowerOf2((int)(_buckets.Length * 1.5));
+                int newCapacity = PowerOf2(_buckets.Length * 2);
                 Node<TKey, TValue>[] newBuckets = new Node<TKey, TValue>[newCapacity];
 
                 // Rehash existing entries into the new array
@@ -301,46 +302,6 @@ namespace ObjectMetaDataTaggingLibrary.Services
             return (int)BitOperations.RoundUpToPowerOf2((uint)capacity);
         }
 
-        public void Print()
-        {
-            lock (_lock)
-            {
-                for (int i = 0; i < _buckets.Length; i++)
-                {
-                    Node<TKey, TValue> currentNode = _buckets[i];
-
-                    if (currentNode == null)
-                    {
-                        Console.WriteLine($"[{i}]: null");
-                    }
-                    else
-                    {
-                        Console.Write($"[{i}]: ");
-
-                        while (currentNode != null)
-                        {
-                            Console.Write($"({currentNode.Key}, {currentNode.Value})");
-
-                            if (currentNode.Next != null)
-                            {
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                Console.Write(" --> Collision --> ");
-                                Console.ResetColor();
-                            }
-
-                            currentNode = currentNode.Next;
-
-                            if (currentNode != null)
-                            {
-                                Console.Write(" | ");
-                            }
-                        }
-
-                        Console.WriteLine();
-                    }
-                }
-            }
-        }
     }
 
     public class Node<TKey, TValue>
@@ -348,6 +309,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
         public TKey Key { get; set; }
         public TValue Value { get; set; }
         public Node<TKey, TValue> Next { get; set; }
+        public uint Hash { get; set; }
     }
 
 }
