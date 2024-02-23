@@ -32,8 +32,7 @@ namespace ObjectMetaDataTagging.Benchmark
         [Benchmark]
         public async Task SetMultipleTagsAsyncBenchmark()
         {
-            var testObject = new PersonTranscation();
-            
+            var testObject = new PersonTranscation();            
 
             var tagData = new List<(string name, object value, string description)>();
 
