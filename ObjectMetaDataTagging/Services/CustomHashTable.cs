@@ -7,13 +7,13 @@ namespace ObjectMetaDataTaggingLibrary.Services
 {
     public sealed class CustomHashTable<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
     {
-
+        private int _collisionCount;
         private const int INITIALCAPACITY = 2;       // Default capacity.
-        private const double LOADFACTOR = 0.35;      // Threshold for when resizing will happen. When the number of entries is 75% or more of the current array size
+        public const double LOADFACTOR = 0.35;      // When the number of entries is 35% or more of the current array size it will then trigger a resize.
         private int _count;                          // Number of entries in the hash table
         private Node<TKey, TValue>[] _buckets;       // Internal array to store key-value pairs
         private readonly object _lock = new object();
-
+        public int CollisionCount => _collisionCount;
         public CustomHashTable()
         {
             _buckets = new Node<TKey, TValue>[INITIALCAPACITY];
@@ -63,14 +63,15 @@ namespace ObjectMetaDataTaggingLibrary.Services
         {
             lock (_lock)
             {
-                uint hash = DJB2HashFunction(key, _buckets.Length);
-                uint index = hash;
+                //int index = MultiplicativeHashFunction(key);
+                //uint index = FNV1aHashFunction(key);
+                uint index = DJB2HashFunction(key, _buckets.Length);
 
                 Node<TKey, TValue> currentNode = _buckets[index];
 
                 while (currentNode != null)
                 {
-                    if (currentNode.Hash == hash && currentNode.Key.Equals(key))
+                    if (currentNode.Key.Equals(key))
                     {
                         value = currentNode.Value;
                         return true;
@@ -89,6 +90,8 @@ namespace ObjectMetaDataTaggingLibrary.Services
         {
             lock (_lock)
             {
+                //int index = MultiplicativeHashFunction(key);
+                //uint index = FNV1aHashFunction(key);
                 uint index = DJB2HashFunction(key, _buckets.Length);
 
                 Node<TKey, TValue> currentNode = _buckets[index];
@@ -158,32 +161,20 @@ namespace ObjectMetaDataTaggingLibrary.Services
 
         public uint DJB2HashFunction(TKey key, int capacity)
         {
-            // chosen to implement to DJB2 as it's simple, fast and has good distrubution.
-            // slightly optimised DJB2 for handling strings and non string
-            //  - early Exit for non-string keys
-            //  - determines length of string to avoid repeated calls
-            //  - combines the hash value with the ASCII value of each character in the string
+            uint hash = 5381;
+            const int shiftAmount = 4;
 
-            uint hash = 2166;
-
-            if (key is string strKey)
+            if (key != null)
             {
-                int len = strKey.Length;
-                for (int i = 0; i < len; i++)
+                string keyString = key.ToString();
+                for (int i = 0; i < keyString.Length; i++)
                 {
-                    hash = (hash << 5) + hash + strKey[i];
+                    hash = (hash << shiftAmount) + hash + keyString[i];
                 }
             }
-            else
-            {
-                // mix the bits of hash value with the bits of the hash code of the key (keyHashCode).
-                // The XOR operation introduces variability, and the multiplication by the pmixing operation
-                // is used to reduce clustering and improve the distribution of hash codes
-                int keyHashCode = key!.GetHashCode();
-                hash = (hash ^ (uint)keyHashCode) * 0x9E3779B9;
-            }
 
-            return (uint)(hash % capacity);
+            return hash % (uint)capacity;
+
         }
 
 
@@ -194,49 +185,45 @@ namespace ObjectMetaDataTaggingLibrary.Services
             {
                 ResizeIfNecessary();
 
-                uint hash = DJB2HashFunction(key, _buckets.Length);
-                uint index = hash;
+                uint index = DJB2HashFunction(key, _buckets.Length);
 
                 // Get current node at the index
                 Node<TKey, TValue> currentNode = _buckets[index];
 
                 if (currentNode != null)
                 {
-                    // If collision detected, perform linear probing
+                    _collisionCount++;
+
+                    // If collision detected, perform quadratic probing
                     int probeCount = 0;
                     while (currentNode != null)
                     {
                         probeCount++;
-                        index = (index + 1) % (uint)_buckets.Length; // move to the next slot
+                        index = (uint)((index + probeCount * probeCount) % _buckets.Length); // quadratic probing
 
-                        // if current slot is available, insert the new node
-                        if (_buckets[index] == null)
+                        // If we have probed all slots, resize and start again
+                        if (probeCount >= _buckets.Length)
                         {
-                            _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value, Hash = hash };
-                            _count++;
-                            return;
-                        }
-
-                        if (probeCount == _buckets.Length)
-                        {
-                            // If we have probed all slots, resize and start again
                             ResizeIfNecessary();
-                            index = DJB2HashFunction(key, _buckets.Length);
+                            index = DJB2HashFunction(key, _buckets.Length); // reset index to initial hash value
                             probeCount = 0;
                         }
 
                         currentNode = _buckets[index];
                     }
+
+                    // Found an empty slot, insert the new node
+                    _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value };
+                    _count++;
                 }
                 else
                 {
                     // if key doesn't exist
-                    _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value, Hash = hash };
+                    _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value };
+                    _count++;
                 }
-                _count++;
             }
         }
-
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -244,14 +231,13 @@ namespace ObjectMetaDataTaggingLibrary.Services
         {
             lock (_lock)
             {
-                uint hash = DJB2HashFunction(key, _buckets.Length);
-                uint index = hash;
+                uint index = DJB2HashFunction(key, _buckets.Length);
 
                 Node<TKey, TValue> currentNode = _buckets[index];
 
                 while (currentNode != null)
                 {
-                    if (currentNode.Hash == hash && currentNode.Key.Equals(key))
+                    if (currentNode.Key.Equals(key))
                     {
                         return currentNode.Value;
                     }
@@ -300,9 +286,9 @@ namespace ObjectMetaDataTaggingLibrary.Services
         internal static int PowerOf2(int capacity)
         {
             return (int)BitOperations.RoundUpToPowerOf2((uint)capacity);
-        }
-
+        }      
     }
+
 
     public class Node<TKey, TValue>
     {
