@@ -7,7 +7,7 @@ using ObjectMetaDataTagging.Services;
 namespace ObjectMetaDataTagging.Benchmark
 {
     [MemoryDiagnoser]
-    [SimpleJob(launchCount:1, warmupCount:1, iterationCount: 1)]
+    [SimpleJob(launchCount:2, warmupCount:2, iterationCount: 2)]
 
     public class BenchmarkTests
     {

@@ -8,8 +8,8 @@ namespace ObjectMetaDataTaggingLibrary.Services
     public sealed class CustomHashTable<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
     {
         private int _collisionCount;
-        private const int INITIALCAPACITY = 2;       // Default capacity.
-        public const double LOADFACTOR = 0.35;      // When the number of entries is 35% or more of the current array size it will then trigger a resize.
+        private const int INITIALCAPACITY = 32;       // if set higher performance will be higher at cost of memory
+        public const double LOADFACTOR = 0.75;       // When the number of entries is 75% or more of the current array size it will then trigger a resize.
         private int _count;                          // Number of entries in the hash table
         private Node<TKey, TValue>[] _buckets;       // Internal array to store key-value pairs
         private readonly object _lock = new object();
@@ -172,9 +172,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
                     hash = (hash << shiftAmount) + hash + keyString[i];
                 }
             }
-
             return hash % (uint)capacity;
-
         }
 
 
@@ -192,12 +190,17 @@ namespace ObjectMetaDataTaggingLibrary.Services
 
                 if (currentNode != null)
                 {
-                    _collisionCount++;
-
                     // If collision detected, perform quadratic probing
                     int probeCount = 0;
                     while (currentNode != null)
                     {
+                        // deal with duplicates
+                        if (currentNode.Key.Equals(key))
+                        {
+                            currentNode.Value = value;
+                            return;
+                        }
+
                         probeCount++;
                         index = (uint)((index + probeCount * probeCount) % _buckets.Length); // quadratic probing
 
@@ -212,18 +215,16 @@ namespace ObjectMetaDataTaggingLibrary.Services
                         currentNode = _buckets[index];
                     }
 
-                    // Found an empty slot, insert the new node
-                    _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value };
-                    _count++;
+                    _collisionCount++;
                 }
-                else
-                {
-                    // if key doesn't exist
-                    _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value };
-                    _count++;
-                }
+
+                // Found an empty slot or a slot with no matching key, insert the new node
+                _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value };
+                _count++;
             }
         }
+
+
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -254,11 +255,13 @@ namespace ObjectMetaDataTaggingLibrary.Services
         {
             if (LoadFactor >= LOADFACTOR)
             {
-                // Resize the internal array when the load factor exceeds 0.75.
                 // Ensures that the resulting newCapacity is the smallest power of two that
                 // is greater than or equal to the doubled current size.
                 int newCapacity = PowerOf2(_buckets.Length * 2);
                 Node<TKey, TValue>[] newBuckets = new Node<TKey, TValue>[newCapacity];
+
+                Console.WriteLine($"Resizing: Current capacity = {_buckets.Length}, New capacity = {newCapacity}");
+
 
                 // Rehash existing entries into the new array
                 foreach (var bucket in _buckets)
@@ -286,9 +289,9 @@ namespace ObjectMetaDataTaggingLibrary.Services
         internal static int PowerOf2(int capacity)
         {
             return (int)BitOperations.RoundUpToPowerOf2((uint)capacity);
-        }      
+        }
+       
     }
-
 
     public class Node<TKey, TValue>
     {
