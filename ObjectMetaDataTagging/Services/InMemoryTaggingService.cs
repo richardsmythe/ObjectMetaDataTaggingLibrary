@@ -5,11 +5,13 @@ using ObjectMetaDataTagging.Interfaces;
 using ObjectMetaDataTagging.Models.TagModels;
 using ObjectMetaDataTagging.Utilities;
 using ObjectMetaDataTaggingLibrary.Services;
-using System.Collections.Concurrent;
 
 namespace ObjectMetaDataTagging.Services
 {
-
+    /// <summary>
+    /// Methods for creating and editing tags on other tags and objects.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class InMemoryTaggingService<T> : IDefaultTaggingService<T>
         where T : BaseTag
     {
@@ -20,8 +22,7 @@ namespace ObjectMetaDataTagging.Services
         public event EventHandler<AsyncTagUpdatedEventArgs<T>> TagUpdated;
 
         public readonly CustomHashTable<object, Dictionary<Guid, BaseTag>> data = new CustomHashTable<object, Dictionary<Guid, BaseTag>>();
-        //public readonly ConcurrentDictionary<object, Dictionary<Guid, BaseTag>> data = new ConcurrentDictionary<object, Dictionary<Guid, BaseTag>>();
-
+      
         protected virtual void OnTagAdded(AsyncTagAddedEventArgs<T> e) => TagAdded?.Invoke(this, e);
         protected virtual void OnTagRemoved(AsyncTagRemovedEventArgs<T> e) => TagRemoved?.Invoke(this, e);
         protected virtual void OnTagUpdated(AsyncTagUpdatedEventArgs<T> e) => TagUpdated?.Invoke(this, e);
