@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 namespace ObjectMetaDataTaggingLibrary.Services
 {
@@ -9,7 +10,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
     {
         private int _collisionCount;
         private const int INITIALCAPACITY = 2;       // if set higher performance will be higher at cost of memory
-        public const double LOADFACTOR = 0.50;       // When the number of entries is 50% or more of the current array size it will then trigger a resize.
+        public const double LOADFACTOR = 0.75;       // When the number of entries is 75% or more of the current array size it will then trigger a resize.
         private int _count;                          // Number of entries in the hash table
         private Node<TKey, TValue>[] _buckets;       // Internal array to store key-value pairs
         private readonly object _lock = new object();
@@ -168,16 +169,16 @@ namespace ObjectMetaDataTaggingLibrary.Services
         public uint DJB2HashFunction(TKey key, int capacity)
         {
             uint hash = 5381;
-            const int shiftAmount = 4;
 
             if (key != null)
             {
                 string keyString = key.ToString();
-                for (int i = 0; i < keyString.Length; i++)
+                foreach (char c in keyString)
                 {
-                    hash = (hash << shiftAmount) + hash + keyString[i];
+                    hash = ((hash << 5) + hash) ^ c;
                 }
             }
+
             return hash % (uint)capacity;
         }
 
@@ -189,41 +190,36 @@ namespace ObjectMetaDataTaggingLibrary.Services
             {
                 ResizeIfNecessary();
                 uint index = DJB2HashFunction(key, _buckets.Length);
-                uint startingIndex = index;
-                int probeCount = 0;
 
-                while (true)
+                // Add to bucket
+                if (_buckets[index] == null)
                 {
-                    // If the current slot is empty, insert the new node
-                    if (_buckets[index] == null)
-                    {
-                        _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value };
-                        _count++;
-                        return;
-                    }
-
-                    // Deal with duplicates
-                    if (_buckets[index].Key.Equals(key))
-                    {
-                        _buckets[index].Value = value;
-                        return;
-                    }
-
-                    // Quadratic probing using the sequence h, h + 1, h + 4, h + 9, h + 16, ...
-                    probeCount++;
-                    index = (uint)((startingIndex + probeCount * probeCount) % _buckets.Length);
-
-                    // If probed all slots, resize and start again
-                    if (probeCount >= _buckets.Length)
-                    {
-                        ResizeIfNecessary();
-                        startingIndex = DJB2HashFunction(key, _buckets.Length); // Reset
-                        index = startingIndex;
-                        probeCount = 0;
-                    }
+                    _buckets[index] = new Node<TKey, TValue> { Key = key, Value = value };
+                    _count++;
+                    return;
                 }
+
+                // Collision detected, add to the chain
+                Node<TKey, TValue> currentNode = _buckets[index];
+                while (currentNode.Next != null)
+                {
+                    // If the key already exists in the chain, update the value
+                    if (currentNode.Key.Equals(key))
+                    {
+                        currentNode.Value = value;
+                        return;
+                    }
+                    currentNode = currentNode.Next;
+                    _collisionCount++;
+                }
+
+                // Here currentNode points to the last node in the chain
+                currentNode.Next = new Node<TKey, TValue> { Key = key, Value = value };
+                _count++;
+
             }
         }
+
         public void Print()
         {
             lock (_lock)
@@ -235,6 +231,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
                     while (currentNode != null)
                     {
                         Console.Write($"[{currentNode.Key} - {currentNode.Value}] ");
+                        //Console.Write($"[Tag:{i}] ");
                         currentNode = currentNode.Next;
                     }
                     Console.WriteLine();
@@ -275,32 +272,28 @@ namespace ObjectMetaDataTaggingLibrary.Services
         {
             if (LoadFactor >= LOADFACTOR)
             {
-                // Ensures that the resulting newCapacity is the smallest power of two that
-                // is greater than or equal to the doubled current size.
+                var oldBuckets = _buckets;
+                 
                 int newCapacity = PowerOf2(_buckets.Length * 2);
-                Node<TKey, TValue>[] newBuckets = new Node<TKey, TValue>[newCapacity];
+                Console.WriteLine($"NEW CAPACITY: {newCapacity}");
+                _buckets = new Node<TKey, TValue>[newCapacity];
+          
+                _count = 0;
+                _collisionCount = 0;
 
-                // Rehash existing entries into the new array
-                foreach (var bucket in _buckets)
+                foreach (var bucket in oldBuckets)
                 {
                     Node<TKey, TValue> currentNode = bucket;
 
                     while (currentNode != null)
                     {
-                        uint newIndex = DJB2HashFunction(currentNode.Key, newCapacity);
-
-                        Node<TKey, TValue> nextNode = currentNode.Next;
-
-                        currentNode.Next = newBuckets[newIndex];
-                        newBuckets[newIndex] = currentNode;
-
-                        currentNode = nextNode;
+                        Add(currentNode.Key, currentNode.Value);
+                        currentNode = currentNode.Next;
                     }
                 }
-
-                _buckets = newBuckets;
             }
         }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static int PowerOf2(int capacity)
@@ -315,7 +308,7 @@ namespace ObjectMetaDataTaggingLibrary.Services
         public TKey Key { get; set; }
         public TValue Value { get; set; }
         public Node<TKey, TValue> Next { get; set; }
-        public uint Hash { get; set; }
+       
     }
 
 }
