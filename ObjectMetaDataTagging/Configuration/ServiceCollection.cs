@@ -11,10 +11,10 @@ namespace ObjectMetaDataTagging.Configuration
     {
         public static IServiceCollection AddObjectMetaDataTagging(this IServiceCollection services)
         {
-            services.AddSingleton(typeof(IDefaultTaggingService<>), typeof(InMemoryTaggingService<>));
-            services.AddSingleton<ITagFactory, TagFactory>();
-            services.AddSingleton(typeof(ITagMapper<,>), typeof(TagMapper<,>));
-            services.AddSingleton(typeof(IDynamicQueryBuilder<>), typeof(DynamicQueryBuilder<>));
+            services.AddScoped(typeof(IDefaultTaggingService<>), typeof(InMemoryTaggingService<>));
+            services.AddScoped<ITagFactory, TagFactory>();
+            services.AddScoped(typeof(ITagMapper<,>), typeof(TagMapper<,>));
+            services.AddScoped(typeof(IDynamicQueryBuilder<>), typeof(DynamicQueryBuilder<>));
             services.AddScoped<ITaggingManager<BaseTag>, TaggingManager<BaseTag>>();
 
             return services;

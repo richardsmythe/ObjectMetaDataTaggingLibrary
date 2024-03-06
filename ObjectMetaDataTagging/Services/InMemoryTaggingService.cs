@@ -5,6 +5,7 @@ using ObjectMetaDataTagging.Interfaces;
 using ObjectMetaDataTagging.Models.TagModels;
 using ObjectMetaDataTagging.Utilities;
 using ObjectMetaDataTaggingLibrary.Services;
+using System.Collections.Concurrent;
 
 namespace ObjectMetaDataTagging.Services
 {
@@ -16,13 +17,13 @@ namespace ObjectMetaDataTagging.Services
         where T : BaseTag
     {
         private SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
-        
+
         public event EventHandler<AsyncTagAddedEventArgs<T>> TagAdded;
         public event EventHandler<AsyncTagRemovedEventArgs<T>> TagRemoved;
         public event EventHandler<AsyncTagUpdatedEventArgs<T>> TagUpdated;
 
-        public readonly CustomHashTable<object, Dictionary<Guid, BaseTag>> data = new CustomHashTable<object, Dictionary<Guid, BaseTag>>();
-      
+        //public readonly CustomHashTable<object, Dictionary<Guid, BaseTag>> data = new CustomHashTable<object, Dictionary<Guid, BaseTag>>();
+        public readonly ConcurrentDictionary<object, Dictionary<Guid, BaseTag>> data = new ConcurrentDictionary<object, Dictionary<Guid, BaseTag>>();
         protected virtual void OnTagAdded(AsyncTagAddedEventArgs<T> e) => TagAdded?.Invoke(this, e);
         protected virtual void OnTagRemoved(AsyncTagRemovedEventArgs<T> e) => TagRemoved?.Invoke(this, e);
         protected virtual void OnTagUpdated(AsyncTagUpdatedEventArgs<T> e) => TagUpdated?.Invoke(this, e);
@@ -69,7 +70,7 @@ namespace ObjectMetaDataTagging.Services
         /// <returns>
         /// A task that represents the asynchronous operation. The task result contains the tag associated with the object and ID, or null if the tag is not found.
         /// </returns>
-        public virtual Task<T>? GetTag(object o, Guid tagId)
+        public Task<T> GetTag(object o, Guid tagId)
         {
             if (o == null)
             {
@@ -80,10 +81,9 @@ namespace ObjectMetaDataTagging.Services
             {
                 if (tagDictionary.TryGetValue(tagId, out var tag))
                 {
-                    return tag as Task<T>;
-                }
+                    return Task.FromResult((T)tag);
+                }               
             }
-
             throw new ObjectNotFoundException("Object or tag not found in the data collection.", nameof(o));
         }
 
@@ -191,7 +191,7 @@ namespace ObjectMetaDataTagging.Services
             }
 
             OnSetTagAsyncCallback?.Invoke(o, tag);
-            
+
             OnTagAdded(new AsyncTagAddedEventArgs<T>(o, tag));
         }
 
@@ -229,7 +229,7 @@ namespace ObjectMetaDataTagging.Services
                         return true;
                     }
                 }
-           
+
 
                 return false;
             }
@@ -331,5 +331,5 @@ namespace ObjectMetaDataTagging.Services
             await Task.WhenAll(tags.Select(tag => bulkAddDelegate(o, tag)));
         }
         #endregion
-    }  
+    }
 }

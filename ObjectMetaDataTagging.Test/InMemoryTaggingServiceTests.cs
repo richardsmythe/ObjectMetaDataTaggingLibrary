@@ -9,6 +9,24 @@ namespace ObjectMetaDataTagging.Test
 {
     public class InMemoryTaggingServiceTests
     {
+
+        [Fact]
+        public async Task GetTag_ShouldReturnTag_WhenTagExists()
+        {
+            // Arrange
+            var taggingService = new InMemoryTaggingService<BaseTag>();
+            var obj = new PersonTranscation { Amount = 1244, Sender = "Richard", Receiver = "Jon" };
+            var tag = new BaseTag("TestTag", "Warning", "A string tag");
+            await taggingService.SetTagAsync(obj, tag);
+
+            // Act
+            var retrievedTag = await taggingService.GetTag(obj, tag.Id);
+
+            // Assert
+            Assert.NotNull(retrievedTag);
+            Assert.Equal(tag, retrievedTag);
+        }
+
         [Theory]
         [InlineData(1500)]
         [InlineData(2500)]

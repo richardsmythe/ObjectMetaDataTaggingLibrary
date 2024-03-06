@@ -1,6 +1,7 @@
 ﻿using ObjectMetaDataTagging.Models.TagModels;
 using ObjectMetaDataTaggingLibrary.Services;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -25,7 +26,7 @@ namespace ObjectMetaDataTagging.Utilities
 
     public class ObjectGraphBuilder
     {
-        public static async Task<List<GraphNode>> BuildObjectGraph(CustomHashTable<object, Dictionary<Guid, BaseTag>> cht)
+        public static async Task<List<GraphNode>> BuildObjectGraph(ConcurrentDictionary<object, Dictionary<Guid, BaseTag>> cht)
         {
             var graphNodes = new List<GraphNode>();
             var visitedIds = new HashSet<Guid>();
