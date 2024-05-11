@@ -24,35 +24,15 @@ namespace ObjectMetaDataTagging.Services
         {
             _taggingService = taggingService ?? throw new ArgumentNullException(nameof(taggingService));
         }
-
-        /// <inheritdoc/>
         public Task SetTagAsync(object o, T tag) => _taggingService.SetTagAsync(o, tag);
-
-        /// <inheritdoc/>
         public Task<bool> UpdateTagAsync(object o, Guid tagId, T newTag) => _taggingService.UpdateTagAsync(o, tagId, newTag);
-
-        /// <inheritdoc/>
         Task<IEnumerable<T>> IDefaultTaggingService<T>.GetAllTags(object o) => _taggingService.GetAllTags(o);
-
-        /// <inheritdoc/>
         Task<T>? IDefaultTaggingService<T>.GetTag(object o, Guid tagId) => _taggingService.GetTag(o, tagId);
-
-        /// <inheritdoc/>
         public Task<bool> RemoveAllTagsAsync(object o) => _taggingService.RemoveAllTagsAsync(o);
-
-        /// <inheritdoc/>
         public Task<bool> RemoveTagAsync(object? o, Guid tagId) => _taggingService.RemoveTagAsync(o, tagId);
-
-        /// <inheritdoc/>
         public bool HasTag(object o, Guid tagId) => _taggingService.HasTag(o, tagId);
-
-        /// <inheritdoc/>
         public object? GetObjectByTag(Guid tagId) => _taggingService.GetObjectByTag(tagId);
-
-        /// <inheritdoc/>
         public Task<List<GraphNode>> GetObjectGraph() => _taggingService.GetObjectGraph();
-
-        /// <inheritdoc/>
         public Task BulkAddTagsAsync(object o, IEnumerable<T> tags) => _taggingService.BulkAddTagsAsync(o, tags);
     }
 }

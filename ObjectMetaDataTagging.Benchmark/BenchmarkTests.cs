@@ -38,59 +38,60 @@ namespace ObjectMetaDataTagging.Benchmark
             _inMemoryTaggingService = new InMemoryTaggingService<BaseTag>();
         }
 
-        //[Benchmark]
-        //public async Task SetsTagAsyncBenchmark()
-        //{   
-        //    var testObject = new PersonTranscation();
-        //    var tag = new BaseTag("TagName", "TagValue", "TagDescription");
+        [Benchmark]
+        public async Task SetsTagAsyncBenchmark()
+        {
+            var testObject = new PersonTranscation();
+            var tag = new BaseTag("TagName", "TagValue", "TagDescription");
 
-        //    await _inMemoryTaggingService.SetTagAsync(testObject, tag);
-        //}
+            await _inMemoryTaggingService.SetTagAsync(testObject, tag);
+        }
 
-        //[Benchmark]
-        //public async Task SetMultipleTagsAsyncBenchmark()
-        //{
-        //    var testObject = new PersonTranscation();            
+        [Benchmark]
+        public async Task SetMultipleTagsAsyncBenchmark()
+        {
+            var testObject = new PersonTranscation();
 
-        //    var tagData = new List<(string name, object value, string description)>();
+            var tagData = new List<(string name, object value, string description)>();
 
-        //    for (int i = 1; i <= 25; i++)
-        //    {
-        //        string tagName = $"Tag{i}";
-        //        string tagValue = $"Value{i}";
-        //        string tagDescription = $"Description{i}";
+            for (int i = 1; i <= 25; i++)
+            {
+                string tagName = $"Tag{i}";
+                string tagValue = $"Value{i}";
+                string tagDescription = $"Description{i}";
 
-        //        tagData.Add((tagName, tagValue, tagDescription));
-        //    }
+                tagData.Add((tagName, tagValue, tagDescription));
+            }
 
-        //    IEnumerable<BaseTag> tags = _tagFactory.CreateBaseTags(tagData);
+            IEnumerable<BaseTag> tags = _tagFactory.CreateBaseTags(tagData);
 
-        //    await _inMemoryTaggingService.BulkAddTagsAsync(testObject, tags);
-        //}
+            await _inMemoryTaggingService.BulkAddTagsAsync(testObject, tags);
+        }
 
-        //[Benchmark]
-        //public async Task SetMultipleObjectsAndTagsAsyncBenchmark()
-        //{
-        //    for (int i = 0; i < 50; i++)
-        //    {
-        //        var testObject = new PersonTranscation();
+        [Benchmark]
+        public async Task SetMultipleObjectsAndTagsAsyncBenchmark()
+        {
+            for (int i = 0; i < 50; i++)
+            {
+                var testObject = new PersonTranscation();
 
-        //        var tagData = new List<(string name, object value, string description)>();
+                var tagData = new List<(string name, object value, string description)>();
 
-        //        for (int j = 1; j <= 5; j++)
-        //        {
-        //            string tagName = $"Tag{i}-{j}";
-        //            string tagValue = $"Value{i}-{j}";
-        //            string tagDescription = $"Description{i}-{j}";
+                for (int j = 1; j <= 5; j++)
+                {
+                    string tagName = $"Tag{i}-{j}";
+                    string tagValue = $"Value{i}-{j}";
+                    string tagDescription = $"Description{i}-{j}";
 
-        //            tagData.Add((tagName, tagValue, tagDescription));
-        //        }
+                    tagData.Add((tagName, tagValue, tagDescription));
+                }
 
-        //        IEnumerable<BaseTag> tags = _tagFactory.CreateBaseTags(tagData);
+                IEnumerable<BaseTag> tags = _tagFactory.CreateBaseTags(tagData);
 
-        //        await _inMemoryTaggingService.BulkAddTagsAsync(testObject, tags);
-        //    }
-        //}
+                await _inMemoryTaggingService.BulkAddTagsAsync(testObject, tags);
+            }
+        }
+
         [Benchmark]
 
         public async Task GetTagBenchmark()

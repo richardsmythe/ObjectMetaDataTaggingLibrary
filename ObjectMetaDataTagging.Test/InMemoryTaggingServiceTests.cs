@@ -54,10 +54,8 @@ namespace ObjectMetaDataTagging.Test
                 }
             };
 
-
             await taggingService.SetTagAsync(obj, tag);
             var tags = await taggingService.GetAllTags(obj);
-
 
             // Assert
             Assert.True(taggingService.data.TryGetValue(obj, out var tagDictionary));
@@ -116,7 +114,6 @@ namespace ObjectMetaDataTagging.Test
             await taggingService.SetTagAsync(obj, tag2);
             await taggingService.UpdateTagAsync(obj, tag.Id, modifiedTag);
             var tagCount = (await taggingService.GetAllTags(obj)).Count();
-
 
             // Assert
             Assert.True(taggingService.data.TryGetValue(obj, out var tags));

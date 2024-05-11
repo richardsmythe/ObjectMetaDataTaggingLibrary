@@ -22,8 +22,7 @@ namespace ObjectMetaDataTagging.Services
         public event EventHandler<AsyncTagRemovedEventArgs<T>> TagRemoved;
         public event EventHandler<AsyncTagUpdatedEventArgs<T>> TagUpdated;
 
-        //public readonly CustomHashTable<object, Dictionary<Guid, BaseTag>> data = new CustomHashTable<object, Dictionary<Guid, BaseTag>>();
-        public readonly ConcurrentDictionary<object, Dictionary<Guid, BaseTag>> data = new ConcurrentDictionary<object, Dictionary<Guid, BaseTag>>();
+        public readonly CustomHashTable<object, Dictionary<Guid, BaseTag>> data = new CustomHashTable<object, Dictionary<Guid, BaseTag>>();
         protected virtual void OnTagAdded(AsyncTagAddedEventArgs<T> e) => TagAdded?.Invoke(this, e);
         protected virtual void OnTagRemoved(AsyncTagRemovedEventArgs<T> e) => TagRemoved?.Invoke(this, e);
         protected virtual void OnTagUpdated(AsyncTagUpdatedEventArgs<T> e) => TagUpdated?.Invoke(this, e);
@@ -229,7 +228,6 @@ namespace ObjectMetaDataTagging.Services
                         return true;
                     }
                 }
-
 
                 return false;
             }
