@@ -35,6 +35,28 @@ namespace ObjectMetaDataTagging.Test
             );
         }
 
+        [Fact]
+        public void BuildDynamicQuery_ShouldFailWhenNoMatchingTags()
+        {
+            // Arrange
+            var dynamicQueryBuilder = new DynamicQueryBuilder<BaseTag>();
+
+            var tags = GenerateTags();
+            var filterName = "NonExistentTag";
+            var filterType = "TypeA";
+            var customFilter = new CustomFilter(filterName, filterType);
+
+            // Act
+            var filteredResults = dynamicQueryBuilder
+                .WithPropertyFilter(t => t.Name == customFilter.Name)
+                .WithPropertyFilter(t => t.Type == customFilter.Type)
+                .SetLogicalOperator(LogicalOperator.AND)
+                .BuildDynamicQuery(tags);
+
+            // Assert
+            Assert.Empty(filteredResults);
+        }
+
         private List<BaseTag> GenerateTags()
         {
             var tags = new List<BaseTag>();
